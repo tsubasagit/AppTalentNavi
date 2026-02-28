@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サービス名 - キャッチコピー</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        /* ヒーローセクション */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 100px 20px;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+        }
+        .hero .cta-btn {
+            display: inline-block;
+            background: #fff;
+            color: #764ba2;
+            padding: 16px 48px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .hero .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* 特徴セクション */
+        .features {
+            padding: 80px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .features h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 50px;
+            color: #333;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        .feature-card {
+            text-align: center;
+            padding: 30px 20px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .feature-card p {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        /* CTAセクション */
+        .cta-section {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .cta-section p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .cta-section .cta-btn {
+            display: inline-block;
+            background: #fff;
+            color: #764ba2;
+            padding: 16px 48px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: transform 0.3s;
+        }
+        .cta-section .cta-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        /* フッター */
+        footer {
+            background: #2d3436;
+            color: #b2bec3;
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 0.9rem;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .hero p { font-size: 1rem; }
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ヒーローセクション -->
+    <section class="hero">
+        <h1>あなたのサービス名</h1>
+        <p>ここにキャッチコピーを入れます。ユーザーの心をつかむ一言で、サービスの魅力を伝えましょう。</p>
+        <a href="#contact" class="cta-btn">今すぐはじめる</a>
+    </section>
+
+    <!-- 特徴セクション -->
+    <section class="features">
+        <h2>選ばれる3つの理由</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="icon">✨</div>
+                <h3>特徴1のタイトル</h3>
+                <p>特徴1の説明文をここに書きます。サービスの強みをわかりやすく伝えましょう。</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🚀</div>
+                <h3>特徴2のタイトル</h3>
+                <p>特徴2の説明文をここに書きます。具体的な数字や事例があると説得力が増します。</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">💎</div>
+                <h3>特徴3のタイトル</h3>
+                <p>特徴3の説明文をここに書きます。他社との差別化ポイントを示しましょう。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTAセクション -->
+    <section class="cta-section" id="contact">
+        <h2>今すぐはじめましょう</h2>
+        <p>あなたもこのサービスで新しい体験を始めてみませんか？</p>
+        <a href="#" class="cta-btn">無料で試してみる</a>
+    </section>
+
+    <!-- フッター -->
+    <footer>
+        <p>&copy; 2026 あなたのサービス名. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

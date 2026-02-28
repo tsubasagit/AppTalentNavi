@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サービス名 - ビジネスを加速するソリューション</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            color: #333;
+            line-height: 1.8;
+        }
+
+        /* ヒーロー */
+        .hero {
+            background: linear-gradient(135deg, #0c2461 0%, #0a3d62 50%, #3c6382 100%);
+            color: white;
+            padding: 120px 20px 100px;
+            text-align: center;
+        }
+        .hero .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 25px;
+        }
+        .hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.15rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            display: inline-block;
+            background: #e55039;
+            color: white;
+            padding: 14px 36px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); background: #eb2f06; }
+        .btn-secondary {
+            display: inline-block;
+            background: transparent;
+            color: white;
+            padding: 14px 36px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+        /* 数字セクション */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            max-width: 800px;
+            margin: -40px auto 0;
+            position: relative;
+            z-index: 10;
+        }
+        .stat-card {
+            background: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .stat-card:first-child { border-radius: 12px 0 0 12px; }
+        .stat-card:last-child { border-radius: 0 12px 12px 0; }
+        .stat-card .number { font-size: 2.5rem; font-weight: 700; color: #0c2461; }
+        .stat-card .label { font-size: 0.9rem; color: #666; margin-top: 5px; }
+
+        /* 特徴 */
+        .features {
+            padding: 100px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .section-title h2 { font-size: 2rem; color: #0c2461; margin-bottom: 10px; }
+        .section-title p { color: #666; font-size: 1.05rem; }
+
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+        .feature-row:nth-child(odd) { flex-direction: row-reverse; }
+        .feature-text { flex: 1; }
+        .feature-visual {
+            flex: 1;
+            background: linear-gradient(135deg, #f1f2f6, #dfe4ea);
+            border-radius: 16px;
+            padding: 60px 40px;
+            text-align: center;
+            font-size: 4rem;
+        }
+        .feature-text h3 { font-size: 1.4rem; margin-bottom: 12px; color: #0c2461; }
+        .feature-text p { color: #666; font-size: 1rem; }
+
+        /* 料金 */
+        .pricing {
+            background: #f8f9fa;
+            padding: 80px 20px;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .price-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .price-card:hover { transform: translateY(-5px); }
+        .price-card.featured {
+            border: 2px solid #0c2461;
+            position: relative;
+        }
+        .price-card.featured::before {
+            content: "人気";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e55039;
+            color: white;
+            padding: 4px 16px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .price-card h3 { font-size: 1.2rem; margin-bottom: 10px; color: #333; }
+        .price-card .price { font-size: 2.2rem; font-weight: 700; color: #0c2461; margin-bottom: 5px; }
+        .price-card .period { font-size: 0.85rem; color: #999; margin-bottom: 20px; }
+        .price-card ul { list-style: none; text-align: left; margin-bottom: 25px; }
+        .price-card ul li { padding: 8px 0; color: #555; font-size: 0.95rem; border-bottom: 1px solid #f0f0f0; }
+        .price-card ul li::before { content: "✓ "; color: #0c2461; font-weight: 700; }
+        .price-card .btn-primary { display: block; text-align: center; }
+
+        /* CTA */
+        .cta {
+            background: linear-gradient(135deg, #0c2461, #3c6382);
+            color: white;
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .cta h2 { font-size: 2rem; margin-bottom: 15px; }
+        .cta p { opacity: 0.9; margin-bottom: 30px; font-size: 1.1rem; }
+
+        footer {
+            background: #1e272e;
+            color: #808e9b;
+            text-align: center;
+            padding: 30px;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .stats { grid-template-columns: 1fr; }
+            .stat-card { border-radius: 0 !important; }
+            .stat-card:first-child { border-radius: 12px 12px 0 0 !important; }
+            .stat-card:last-child { border-radius: 0 0 12px 12px !important; }
+            .feature-row, .feature-row:nth-child(odd) { flex-direction: column; gap: 30px; }
+            .pricing-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="badge">新登場</div>
+        <h1>サービス名</h1>
+        <p>ビジネスの課題を解決する、シンプルで強力なソリューション。今すぐ始めて、チームの生産性を向上させましょう。</p>
+        <div class="btn-group">
+            <a href="#pricing" class="btn-primary">無料で始める</a>
+            <a href="#features" class="btn-secondary">詳しく見る</a>
+        </div>
+    </section>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="number">1,000+</div>
+            <div class="label">導入企業数</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">98%</div>
+            <div class="label">顧客満足度</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">50%</div>
+            <div class="label">業務効率化</div>
+        </div>
+    </div>
+
+    <section class="features" id="features">
+        <div class="section-title">
+            <h2>選ばれる理由</h2>
+            <p>シンプルな操作で、圧倒的な成果を</p>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-text">
+                <h3>直感的な操作</h3>
+                <p>複雑な設定は不要。誰でもすぐに使い始められるシンプルなインターフェースで、チーム全体の生産性を向上させます。</p>
+            </div>
+            <div class="feature-visual">🎯</div>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-text">
+                <h3>リアルタイム分析</h3>
+                <p>データをリアルタイムで分析し、ビジネスの意思決定をサポート。ダッシュボードで全体像を一目で把握できます。</p>
+            </div>
+            <div class="feature-visual">📊</div>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-text">
+                <h3>安心のセキュリティ</h3>
+                <p>エンタープライズグレードのセキュリティで、大切なデータを守ります。ISO27001認証取得済み。</p>
+            </div>
+            <div class="feature-visual">🔒</div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <div class="section-title">
+            <h2>料金プラン</h2>
+            <p>ビジネスの規模に合わせて選べる3つのプラン</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="price-card">
+                <h3>スターター</h3>
+                <div class="price">無料</div>
+                <div class="period">個人利用</div>
+                <ul>
+                    <li>基本機能すべて</li>
+                    <li>3プロジェクトまで</li>
+                    <li>メールサポート</li>
+                </ul>
+                <a href="#" class="btn-primary">無料で始める</a>
+            </div>
+            <div class="price-card featured">
+                <h3>ビジネス</h3>
+                <div class="price">¥9,800</div>
+                <div class="period">月額 / チーム</div>
+                <ul>
+                    <li>全機能利用可能</li>
+                    <li>無制限プロジェクト</li>
+                    <li>優先サポート</li>
+                    <li>チーム管理機能</li>
+                </ul>
+                <a href="#" class="btn-primary">14日間無料体験</a>
+            </div>
+            <div class="price-card">
+                <h3>エンタープライズ</h3>
+                <div class="price">お問合せ</div>
+                <div class="period">カスタム</div>
+                <ul>
+                    <li>専用環境</li>
+                    <li>SLA保証</li>
+                    <li>専任サポート</li>
+                    <li>カスタム連携</li>
+                </ul>
+                <a href="#" class="btn-primary">お問い合わせ</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>今すぐ始めましょう</h2>
+        <p>無料プランで今日から使い始めることができます</p>
+        <a href="#" class="btn-primary">無料アカウントを作成</a>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 サービス名. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
