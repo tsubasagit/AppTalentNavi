@@ -1,0 +1,17 @@
+{
+  "name": "AppTalentNavi",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postStartCommand": "python hajime.py -y",
+  "secrets": {
+    "GEMINI_API_KEY": {
+      "description": "Gemini API key for AppTalentNavi. Get one at https://aistudio.google.com/apikey"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

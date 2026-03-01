@@ -1,0 +1,5 @@
+image: gitpod/workspace-python-3.11
+
+tasks:
+  - name: AppTalentNavi
+    command: python hajime.py -y

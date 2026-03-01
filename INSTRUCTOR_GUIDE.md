@@ -1,0 +1,120 @@
+# AppTalentNavi 講師ガイド
+
+## 研修概要
+
+- **所要時間**: 90分
+- **対象**: ビジネスパーソン（プログラミング経験不問）
+- **目標**: AIエージェントにタスクを依頼し、自律的に業務を遂行させる体験を通じてAI活用の可能性を理解する
+- **使用ツール**: AppTalentNavi v2.0（GitHub Codespaces推奨）
+
+---
+
+## 事前準備（講師）
+
+### 1. Gemini APIキーの取得
+
+1. [Google AI Studio](https://aistudio.google.com/apikey) にアクセス
+2. APIキーを作成（無料枠で利用可能）
+3. 受講者数分のキーを用意するか、共有キーを1つ用意
+
+### 2. GitHub Codespaces Secrets 設定
+
+**リポジトリ単位で設定する場合:**
+
+1. GitHubリポジトリの Settings > Secrets and variables > Codespaces
+2. `GEMINI_API_KEY` を追加（値にAPIキーを入力）
+3. これにより、このリポジトリからCodespacesを起動した全員にキーが自動注入される
+
+**受講者個人で設定する場合:**
+
+1. 各受講者に [github.com/settings/codespaces](https://github.com/settings/codespaces) でSecretを設定してもらう
+2. `GEMINI_API_KEY` = 配布したAPIキー
+3. Repository access で対象リポジトリを選択
+
+### 3. 動作確認
+
+```bash
+# Codespacesで起動し、以下が表示されることを確認:
+# - 「クラウドIDE検出: codespaces」
+# - 「Gemini API 接続成功」
+# - 「はじめまして！」メッセージ
+```
+
+---
+
+## 研修タイムテーブル（90分）
+
+| 時間 | 内容 | 備考 |
+|------|------|------|
+| 0:00-0:10 | オープニング・AIエージェントとは | スライドで概要説明 |
+| 0:10-0:15 | Codespaces起動 | 受講者全員の環境起動を確認 |
+| 0:15-0:45 | シナリオA: データ抽出 | メイン演習。全員同時進行 |
+| 0:45-0:55 | 振り返り・質疑応答 | AIが何をしたか、どのツールを使ったか |
+| 0:55-1:15 | シナリオB or C: 自由体験 | 受講者が好きなシナリオを選択 |
+| 1:15-1:30 | まとめ・ディスカッション | AIエージェントの可能性と限界 |
+
+---
+
+## シナリオA: データ抽出（詳細ガイド）
+
+### 受講者への指示
+
+```
+「会議メモからデータを抽出して」と入力してください。
+```
+
+### AIが行うこと（期待動作）
+
+1. `data/meetings/` フォルダのファイルを Glob で検索
+2. 各ファイルを Read で読み込み
+3. 顧客名・クレーム内容・担当者名を抽出
+4. CSV形式で Write 出力
+
+### 講師の見どころポイント
+
+- AIが各ツール実行前に日本語で説明する（教育ラベル機能）
+- フォーマットがバラバラなファイルから同じ項目を抽出できることを強調
+- 「人間が手作業でやったら何分かかるか？」を問いかける
+
+### よくある質問
+
+- **Q: CSVが文字化けする** → UTF-8で保存されているので、Excelで開く際は「テキストファイルウィザード」でUTF-8を指定
+- **Q: 抽出が不完全** → 「追加で○○も抽出して」と追加指示できることを説明
+
+---
+
+## トラブルシューティング
+
+### Codespacesが起動しない
+
+- GitHubアカウントのCodespaces利用制限を確認
+- 無料枠: 月60時間（2コア）
+
+### 「Gemini APIが利用できません」
+
+- Codespaces Secrets に `GEMINI_API_KEY` が設定されているか確認
+- APIキーが有効か確認（[Google AI Studio](https://aistudio.google.com/apikey) でテスト）
+
+### レスポンスが遅い
+
+- Gemini APIの無料枠レート制限（1分あたり15リクエスト）に達している可能性
+- 少し待ってから再試行
+
+### 「考え中...」のまま動かない
+
+- Ctrl+C で中断し、再度入力
+- 2回Ctrl+Cで終了し、`python hajime.py -y` で再起動
+
+---
+
+## ローカル環境での実施
+
+クラウドIDEが使えない場合:
+
+```bash
+# Python 3.8+ が必要
+python setup-hajime.py  # APIキー設定 or Ollama設定
+python hajime.py -y     # 起動
+```
+
+Ollama を使う場合は事前に [ollama.ai](https://ollama.ai) からインストールし、`ollama pull qwen2.5-coder:7b` でモデルをダウンロードしておく。
