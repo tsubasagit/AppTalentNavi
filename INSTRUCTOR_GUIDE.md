@@ -19,17 +19,29 @@
 
 ### 2. GitHub Codespaces Secrets 設定
 
-**リポジトリ単位で設定する場合:**
+**リポジトリ単位で設定する場合（推奨・少人数）:**
 
 1. GitHubリポジトリの Settings > Secrets and variables > Codespaces
 2. `GEMINI_API_KEY` を追加（値にAPIキーを入力）
 3. これにより、このリポジトリからCodespacesを起動した全員にキーが自動注入される
 
-**受講者個人で設定する場合:**
+> ⚠️ **レート制限に注意**: Gemini無料枠は1分あたり15リクエストの制限があります。
+> 20人以上が同時利用する場合は、共有キー1つでは不足します。
+> 以下の「受講者個人でAPIキーを取得する方法」を推奨します。
 
-1. 各受講者に [github.com/settings/codespaces](https://github.com/settings/codespaces) でSecretを設定してもらう
-2. `GEMINI_API_KEY` = 配布したAPIキー
-3. Repository access で対象リポジトリを選択
+**受講者個人でAPIキーを取得する方法（推奨・大人数）:**
+
+1. 各受講者に以下の手順を案内してください:
+   - [Google AI Studio](https://aistudio.google.com/apikey) にGoogleアカウントでログイン
+   - 「APIキーを作成」をクリック（無料・クレジットカード不要）
+   - 作成されたキーをコピー
+2. [github.com/settings/codespaces](https://github.com/settings/codespaces) でSecretを設定:
+   - Name: `GEMINI_API_KEY`
+   - Value: コピーしたAPIキー
+   - Repository access で対象リポジトリを選択
+3. Codespacesを再起動（既に起動済みの場合）
+
+> 💡 **1人1キーのメリット**: レート制限が受講者ごとに独立するため、同時利用でも快適に動作します。
 
 ### 3. 動作確認
 
@@ -95,10 +107,12 @@
 - Codespaces Secrets に `GEMINI_API_KEY` が設定されているか確認
 - APIキーが有効か確認（[Google AI Studio](https://aistudio.google.com/apikey) でテスト）
 
-### レスポンスが遅い
+### レスポンスが遅い / 「API利用制限に達しました」と表示される
 
 - Gemini APIの無料枠レート制限（1分あたり15リクエスト）に達している可能性
-- 少し待ってから再試行
+- **対策1**: 30秒〜1分待ってから再試行（自動リトライが動作します）
+- **対策2**: 受講者各自でAPIキーを取得してもらう（上記「受講者個人でAPIキーを取得する方法」参照）
+- **対策3**: 有料プラン（Pay-as-you-go）のAPIキーを使用する（レート制限が大幅に緩和）
 
 ### 「考え中...」のまま動かない
 

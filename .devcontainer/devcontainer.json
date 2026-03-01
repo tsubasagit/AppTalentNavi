@@ -1,16 +1,18 @@
 {
   "name": "AppTalentNavi",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
-  "postStartCommand": "python hajime.py -y",
+  "postCreateCommand": "pip install --quiet requests 2>/dev/null || true",
+  "postStartCommand": "python hajime.py",
   "secrets": {
     "GEMINI_API_KEY": {
-      "description": "Gemini API key for AppTalentNavi. Get one at https://aistudio.google.com/apikey"
+      "description": "Gemini APIキー（必須）。https://aistudio.google.com/apikey で無料取得できます。"
     }
   },
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.fontSize": 14
       }
     }
   }

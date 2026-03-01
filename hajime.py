@@ -82,8 +82,13 @@ def detect_cloud_ide():
 def print_header():
     """シンプルなヘッダーを表示"""
     print()
-    print("  AppTalentNavi — AIエージェント体験 研修ツール")
-    print("  ──────────────────────────────────────────────")
+    print("  ╔══════════════════════════════════════════════╗")
+    print("  ║  AppTalentNavi v2.0                          ║")
+    print("  ║  AIエージェント体験 研修ツール                ║")
+    print("  ╚══════════════════════════════════════════════╝")
+    print()
+    print("  AIエージェントが自動でタスクを実行します。")
+    print("  あなたは指示を入力するだけ。あとはAIにお任せ！")
     print()
 
 
@@ -179,6 +184,103 @@ def check_ollama():
     return True
 
 
+def show_guide_menu():
+    """対話式ガイドメニューを表示し、選択に応じて環境変数に初期プロンプトを設定する。
+    シナリオ実行後も対話を継続できるよう、-p（ワンショット）ではなく
+    HAJIME_INITIAL_PROMPT 環境変数を使用する。
+    """
+    print("  ━━ 体験メニュー ━━━━━━━━━━━━━━━━━━━")
+    print()
+    print("  ★1. データ抽出【おすすめ・初めての方はコチラ】")
+    print("     20件の会議メモから情報を自動で整理 (約5分)")
+    print()
+    print("   2. Web調査")
+    print("     気になるテーマをAIが調べてレポート作成 (約3分)")
+    print()
+    print("   3. ファイル整理")
+    print("     散らばったファイルを自動で分類 (約3分)")
+    print()
+    print("   4. 自由入力")
+    print("     好きな指示を入力して自由に体験")
+    print()
+
+    while True:
+        try:
+            choice = input("  番号を入力 [1-4] (Enter で 1): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            sys.exit(0)
+
+        if choice == "" or choice == "1":
+            prompt = "data/meetings/ にある会議メモを読んで、顧客名・クレーム内容・担当者名・日付をCSVファイルに抽出してください"
+            os.environ["HAJIME_INITIAL_PROMPT"] = prompt
+            sys.argv.append("-y")
+            print()
+            print("  → データ抽出シナリオを開始します...")
+            print()
+            return
+
+        elif choice == "2":
+            print()
+            try:
+                theme = input("  調査テーマを入力してください: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                sys.exit(0)
+            if not theme:
+                print("  テーマが入力されませんでした。もう一度選択してください。")
+                print()
+                continue
+            prompt = f"「{theme}」についてWeb検索で調査し、調査レポートをMarkdownファイルにまとめてください"
+            os.environ["HAJIME_INITIAL_PROMPT"] = prompt
+            sys.argv.append("-y")
+            print()
+            print(f"  → 「{theme}」のWeb調査を開始します...")
+            print()
+            return
+
+        elif choice == "3":
+            print()
+            try:
+                folder = input("  整理するフォルダパス (Enter でカレントディレクトリ): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                sys.exit(0)
+            if not folder:
+                folder = "."
+            prompt = f"「{folder}」フォルダ内のファイル一覧を確認し、種類ごとにサブフォルダに分類・リネームしてください"
+            os.environ["HAJIME_INITIAL_PROMPT"] = prompt
+            sys.argv.append("-y")
+            print()
+            print(f"  → フォルダ「{folder}」のファイル整理を開始します...")
+            print()
+            return
+
+        elif choice == "4":
+            sys.argv.append("-y")
+            print()
+            print("  → 自由入力モードで起動します。プロンプトに指示を入力してください。")
+            print()
+            return
+
+        else:
+            print("  1〜4の番号を入力してください。")
+            print()
+
+
+def _should_skip_guide():
+    """ガイドメニューをスキップすべきか判定する。"""
+    for arg in sys.argv[1:]:
+        if arg in ("-p", "--prompt"):
+            return True
+        if arg.startswith("-p=") or arg.startswith("--prompt="):
+            return True
+    if "--skip-guide" in sys.argv:
+        sys.argv.remove("--skip-guide")
+        return True
+    return False
+
+
 def main():
     print_header()
 
@@ -233,6 +335,10 @@ def main():
     else:
         os.environ["OLLAMA_BASE_URL"] = OLLAMA_BASE_URL
         os.environ["CO_VIBE_MODEL"] = os.environ.get("CO_VIBE_MODEL", RECOMMENDED_OLLAMA_MODEL)
+
+    # === ガイドメニュー ===
+    if not _should_skip_guide():
+        show_guide_menu()
 
     # co-vibe.py を実行
     co_vibe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "co-vibe.py")

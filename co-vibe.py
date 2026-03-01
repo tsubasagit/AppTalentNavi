@@ -2446,10 +2446,16 @@ class MultiProviderClient:
                 retry_count += 1
                 self._mark_provider_unhealthy(provider, str(e))
                 wait_time = e.retry_after or BASE_BACKOFF
-                _scroll_aware_print(
-                    f"  {_ansi(chr(27)+'[38;5;226m')}⚡ {provider} rate limited "
-                    f"(attempt {retry_count}/{MAX_RETRIES}){C.RESET}",
-                    flush=True)
+                if _HAJIME_MODE:
+                    _scroll_aware_print(
+                        f"  {_ansi(chr(27)+'[38;5;226m')}⚡ API利用制限に達しました "
+                        f"（リトライ {retry_count}/{MAX_RETRIES}）{C.RESET}",
+                        flush=True)
+                else:
+                    _scroll_aware_print(
+                        f"  {_ansi(chr(27)+'[38;5;226m')}⚡ {provider} rate limited "
+                        f"(attempt {retry_count}/{MAX_RETRIES}){C.RESET}",
+                        flush=True)
                 if self.debug:
                     print(f"{C.YELLOW}[debug] {provider}/{model_id} rate limited: {e}{C.RESET}",
                           file=sys.stderr)
@@ -2471,11 +2477,17 @@ class MultiProviderClient:
                               if p not in tried_providers]
                 if cross_tier:
                     provider, model_id, fallback_tier = cross_tier[0]
-                    _scroll_aware_print(
-                        f"  {_ansi(chr(27)+'[38;5;226m')}⚠️ Rate limited, "
-                        f"falling back to {fallback_tier} tier: "
-                        f"{provider}/{model_id}{C.RESET}",
-                        flush=True)
+                    if _HAJIME_MODE:
+                        _scroll_aware_print(
+                            f"  {_ansi(chr(27)+'[38;5;226m')}⚠️ 利用制限のため "
+                            f"代替モデルに切り替え中...{C.RESET}",
+                            flush=True)
+                    else:
+                        _scroll_aware_print(
+                            f"  {_ansi(chr(27)+'[38;5;226m')}⚠️ Rate limited, "
+                            f"falling back to {fallback_tier} tier: "
+                            f"{provider}/{model_id}{C.RESET}",
+                            flush=True)
                     continue
 
                 # 3) Exponential backoff — all providers exhausted
@@ -2526,6 +2538,11 @@ class MultiProviderClient:
                 raise  # no more fallbacks
 
         # MAX_RETRIES exceeded — raise clear error instead of looping forever
+        if _HAJIME_MODE:
+            raise RuntimeError(
+                f"APIの利用制限により{MAX_RETRIES}回のリトライ後も応答を取得できませんでした。"
+                f"数分待ってからもう一度お試しください。"
+            )
         raise RuntimeError(
             f"All API providers are rate-limited after {MAX_RETRIES} attempts. "
             f"Please wait a few minutes and try again, or check your API usage limits."
@@ -8093,6 +8110,9 @@ class TUI:
         self.is_interactive = sys.stdin.isatty() and sys.stdout.isatty()
         self._is_cjk = self._detect_cjk_locale()
         self.scroll_region = ScrollRegion()
+        # HAJIME_MODE: file processing progress counter
+        self._hajime_read_count = 0
+        self._hajime_read_total = 0
         try:
             self._term_cols = shutil.get_terminal_size((80, 24)).columns
         except (ValueError, OSError):
@@ -8351,14 +8371,18 @@ class TUI:
             plan_tag = f"{_rl_ansi(chr(27)+'[38;5;226m')}[PLAN]{_rl_reset} " if plan_mode else ""
             # Show context usage indicator in prompt
             if session:
-                pct = min(int((session.get_token_estimate() / session.config.context_window) * 100), 100)
-                if pct < 50:
-                    ctx_color = _rl_ansi("\033[38;5;240m")
-                elif pct < 80:
-                    ctx_color = _rl_ansi("\033[38;5;226m")
+                if _HAJIME_MODE:
+                    # HAJIMEモード: 非技術者向けの簡潔なプロンプト
+                    prompt_str = f"{plan_tag}{_rl_ansi(chr(27)+'[38;5;51m')}指示を入力 ❯{_rl_reset} "
                 else:
-                    ctx_color = _rl_ansi("\033[38;5;196m")
-                prompt_str = f"{plan_tag}{ctx_color}ctx:{pct}%{_rl_reset} {_rl_ansi(chr(27)+'[38;5;51m')}❯{_rl_reset} "
+                    pct = min(int((session.get_token_estimate() / session.config.context_window) * 100), 100)
+                    if pct < 50:
+                        ctx_color = _rl_ansi("\033[38;5;240m")
+                    elif pct < 80:
+                        ctx_color = _rl_ansi("\033[38;5;226m")
+                    else:
+                        ctx_color = _rl_ansi("\033[38;5;196m")
+                    prompt_str = f"{plan_tag}{ctx_color}ctx:{pct}%{_rl_reset} {_rl_ansi(chr(27)+'[38;5;51m')}❯{_rl_reset} "
             else:
                 prompt_str = f"{plan_tag}{_rl_ansi(chr(27)+'[38;5;51m')}❯{_rl_reset} "
             line = input(prompt_str)
@@ -8800,11 +8824,45 @@ class TUI:
         self._term_cols = _get_terminal_width()  # refresh on each call
         max_display = self._term_cols - 10
 
-        # HAJIME_MODE: show Japanese tool label
-        _tool_prefix = ""
+        # HAJIME_MODE: simplified Japanese tool display
         if _HAJIME_MODE:
             _jp_label = self._HAJIME_TOOL_LABELS.get(name, name)
-            _tool_prefix = f"[ツール: {_jp_label}] "
+            _c = _ansi("\033[38;5;39m")
+            _d = _ansi("\033[38;5;240m")
+            if name == "Read":
+                path = params.get("file_path", "")
+                fname = os.path.basename(path) if path else path
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} {fname} を読み込み中...")
+            elif name == "Write":
+                path = params.get("file_path", "")
+                fname = os.path.basename(path) if path else path
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} {fname} を作成中...")
+            elif name == "Edit":
+                path = params.get("file_path", "")
+                fname = os.path.basename(path) if path else path
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} {fname} を編集中...")
+            elif name == "Bash":
+                cmd = params.get("command", "")
+                display = cmd if len(cmd) <= 60 else cmd[:57] + "..."
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} {display}")
+            elif name == "WebSearch":
+                query = params.get("query", "")
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} 「{query}」を検索中...")
+            elif name == "WebFetch":
+                url = params.get("url", "")
+                url_display = url if len(url) <= 50 else url[:47] + "..."
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} {url_display} を取得中...")
+            elif name in ("Glob", "Grep"):
+                pat = params.get("pattern", "")
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET} 「{pat}」を検索中...")
+            else:
+                _p(f"\n  {_c}[{_jp_label}]{C.RESET}")
+            # Track Read calls for progress display
+            if name == "Read" and hasattr(self, '_hajime_read_count'):
+                self._hajime_read_count += 1
+                if self._hajime_read_total > 0:
+                    _p(f"  {_d}処理中: {self._hajime_read_count}/{self._hajime_read_total} ファイル{C.RESET}")
+            return
 
         if name == "Bash":
             cmd = params.get("command", "")
@@ -8887,6 +8945,45 @@ class TUI:
         while lines and not lines[-1].strip():
             lines.pop()
         line_count = len(lines)
+
+        # HAJIME_MODE: simplified Japanese result display
+        if _HAJIME_MODE:
+            _p = self._scroll_print
+            _c = _ansi("\033[38;5;39m")
+            _g = _ansi("\033[38;5;46m")
+            _r = _ansi("\033[38;5;196m")
+            _jp_label = self._HAJIME_TOOL_LABELS.get(name, name)
+            fname = ""
+            if params:
+                fp = params.get("file_path", "") or params.get("notebook_path", "")
+                fname = os.path.basename(fp) if fp else ""
+            if is_error:
+                err_first = lines[0].strip() if lines else "エラー"
+                _p(f"  {_r}✗ [{_jp_label}] エラー: {_truncate_to_display_width(err_first, 60)}{C.RESET}")
+            elif name == "Read":
+                _p(f"  {_g}✓{C.RESET} {fname} を読み込みました（{line_count}行）")
+            elif name == "Write":
+                _p(f"  {_g}✓{C.RESET} {fname} を作成しました")
+            elif name == "Edit":
+                _p(f"  {_g}✓{C.RESET} {fname} を編集しました")
+            elif name == "Bash":
+                _p(f"  {_g}✓{C.RESET} コマンドを実行しました")
+            elif name == "WebSearch":
+                query = params.get("query", "") if params else ""
+                _p(f"  {_g}✓{C.RESET} 「{query}」の検索が完了しました")
+            elif name == "WebFetch":
+                _p(f"  {_g}✓{C.RESET} Webページを取得しました")
+            elif name == "Glob":
+                _p(f"  {_g}✓{C.RESET} 検索が完了しました（{line_count}件）")
+                # Set total file count for Read progress tracking
+                if line_count > 1:
+                    self._hajime_read_count = 0
+                    self._hajime_read_total = line_count
+            elif name == "Grep":
+                _p(f"  {_g}✓{C.RESET} 検索が完了しました（{line_count}件）")
+            else:
+                _p(f"  {_g}✓{C.RESET} {_jp_label}が完了しました")
+            return
 
         _dim = _ansi("\033[38;5;240m")
         _red = _ansi("\033[38;5;196m")
@@ -9931,8 +10028,13 @@ class Agent:
                         # Rate limit exhausted all fallbacks — show friendly message
                         last_error = e
                         if retry < self.MAX_RETRIES:
-                            _p(f"\n  {_ansi(chr(27)+'[38;5;226m')}⏳ All providers rate limited, "
-                               f"waiting before retry...{C.RESET}")
+                            if _HAJIME_MODE:
+                                _wait = 3 + retry * 2
+                                _p(f"\n  {_ansi(chr(27)+'[38;5;226m')}⏳ APIの利用制限に達しました。"
+                                   f"{_wait}秒後に自動リトライします...{C.RESET}")
+                            else:
+                                _p(f"\n  {_ansi(chr(27)+'[38;5;226m')}⏳ All providers rate limited, "
+                                   f"waiting before retry...{C.RESET}")
                             time.sleep(3 + retry * 2)
                             continue
                         raise
@@ -9948,8 +10050,12 @@ class Agent:
                 self.tui.stop_spinner()
 
                 if response is None:
-                    _p(f"\n{C.RED}The AI didn't respond. It may still be loading or ran out of memory.{C.RESET}")
-                    _p(f"{C.DIM}Try again, or check your API keys if this keeps happening.{C.RESET}")
+                    if _HAJIME_MODE:
+                        _p(f"\n{C.RED}AIからの応答がありません。接続中かメモリ不足の可能性があります。{C.RESET}")
+                        _p(f"{C.DIM}もう一度お試しください。繰り返し発生する場合はAPIキーを確認してください。{C.RESET}")
+                    else:
+                        _p(f"\n{C.RED}The AI didn't respond. It may still be loading or ran out of memory.{C.RESET}")
+                        _p(f"{C.DIM}Try again, or check your API keys if this keeps happening.{C.RESET}")
                     break
 
                 # 2. Parse response
@@ -9987,8 +10093,12 @@ class Agent:
                 if not text and not tool_calls and iteration < self.MAX_ITERATIONS - 1:
                     _empty_retries += 1
                     if _empty_retries > 3:
-                        _p(f"\n{C.YELLOW}The AI returned empty responses (the model may be overloaded or incompatible).{C.RESET}")
-                        _p(f"{C.DIM}Try rephrasing, or switch models with: /model <name>{C.RESET}")
+                        if _HAJIME_MODE:
+                            _p(f"\n{C.YELLOW}AIから空の応答が返されました（モデルが混雑中または互換性の問題があります）。{C.RESET}")
+                            _p(f"{C.DIM}指示を言い換えてもう一度お試しください。{C.RESET}")
+                        else:
+                            _p(f"\n{C.YELLOW}The AI returned empty responses (the model may be overloaded or incompatible).{C.RESET}")
+                            _p(f"{C.DIM}Try rephrasing, or switch models with: /model <name>{C.RESET}")
                         break
                     if self.config.debug:
                         print(f"{C.DIM}[debug] Empty response (retry {_empty_retries}/3), backing off...{C.RESET}", file=sys.stderr)
@@ -10016,8 +10126,12 @@ class Agent:
                 if len(_recent_tool_calls) >= self.MAX_SAME_TOOL_REPEAT:
                     recent = _recent_tool_calls[-self.MAX_SAME_TOOL_REPEAT:]
                     if all(r == recent[0] for r in recent):
-                        _p(f"\n{C.YELLOW}The AI got stuck repeating the same action. Stopped.{C.RESET}")
-                        _p(f"{C.DIM}Try rephrasing your request or asking for a different approach.{C.RESET}")
+                        if _HAJIME_MODE:
+                            _p(f"\n{C.YELLOW}AIが同じ操作を繰り返しているため停止しました。{C.RESET}")
+                            _p(f"{C.DIM}指示を言い換えるか、別のアプローチを試してみてください。{C.RESET}")
+                        else:
+                            _p(f"\n{C.YELLOW}The AI got stuck repeating the same action. Stopped.{C.RESET}")
+                            _p(f"{C.DIM}Try rephrasing your request or asking for a different approach.{C.RESET}")
                         break
                 if len(_recent_tool_calls) > 10:
                     _recent_tool_calls = _recent_tool_calls[-10:]
@@ -10513,6 +10627,26 @@ def main():
     _session_start_time = time.time()
     _session_start_msgs = len(session.messages)
     _typeahead_text = ""   # type-ahead buffer from previous agent run
+
+    # HAJIME_INITIAL_PROMPT: run initial prompt then continue to interactive loop
+    _initial_prompt = os.environ.pop("HAJIME_INITIAL_PROMPT", None)
+    if _initial_prompt:
+        agent.run(_initial_prompt)
+        session.save()
+        _sc = _ansi("\033[38;5;39m")
+        _sh = _ansi("\033[38;5;87m")
+        _sg = _ansi("\033[38;5;46m")
+        print()
+        print(f"  {_sc}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.RESET}")
+        print(f"  {_sg}✦ タスクが完了しました！{C.RESET}")
+        print()
+        print(f"  次にできること:")
+        print(f"    ・「結果を表示して」    → 作成したファイルの内容を確認")
+        print(f"    ・「データを分析して」  → 追加の分析を依頼")
+        print(f"    ・{_sh}/scenario{C.RESET}             → 別のシナリオを体験")
+        print(f"    ・{_sh}exit{C.RESET}                  → 終了")
+        print(f"  {_sc}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.RESET}")
+        print()
 
     # Scroll region: activate for the entire interactive session
     global _active_scroll_region
