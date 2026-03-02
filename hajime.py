@@ -27,8 +27,9 @@ if not hasattr(signal, 'SIGHUP'):
         return _original_signal(signalnum, handler)
     signal.signal = _patched_signal
 
-# Patch 2: Fix encoding for Windows Japanese console
+# Patch 2: Fix encoding for Windows Japanese console (prevent cp932 errors)
 if sys.platform == 'win32':
+    os.environ.setdefault('PYTHONUTF8', '1')
     os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
     if hasattr(sys.stdout, 'reconfigure'):
         try:
@@ -45,10 +46,44 @@ RECOMMENDED_OLLAMA_MODEL = "qwen2.5-coder:7b"
 GEMINI_DEFAULT_MODEL = "gemini-2.5-flash-lite"
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
+
+def _get_base_path():
+    """PyInstaller exe時はsys._MEIPASS、通常時はスクリプトディレクトリ"""
+    if getattr(sys, 'frozen', False):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def _get_user_data_dir():
+    """ユーザーデータディレクトリを取得（exe実行時用）"""
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+        return os.path.join(base, APP_NAME)
+    elif sys.platform == "darwin":
+        return os.path.join(os.path.expanduser("~"), "Library", "Application Support", APP_NAME)
+    else:
+        return os.path.join(os.path.expanduser("~"), f".{APP_NAME.lower()}")
+
+
+_BASE_PATH = _get_base_path()
+_USER_DATA_DIR = _get_user_data_dir()
+
+
 # Load .env file if present (for GEMINI_API_KEY etc.)
 def _load_dotenv():
-    """Load .env file from the same directory as this script."""
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    """Load .env file — exe時はユーザーデータDir、通常時はスクリプトDir"""
+    # exe時はユーザーデータディレクトリの.envを優先
+    if getattr(sys, 'frozen', False):
+        env_path = os.path.join(_USER_DATA_DIR, ".env")
+        # 初回起動時: .env.exampleをコピー
+        if not os.path.exists(env_path):
+            os.makedirs(_USER_DATA_DIR, exist_ok=True)
+            example = os.path.join(_BASE_PATH, ".env.example")
+            if os.path.exists(example):
+                import shutil
+                shutil.copy2(example, env_path)
+    else:
+        env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if not os.path.exists(env_path):
         return
     try:
@@ -124,64 +159,36 @@ def check_gemini():
 
 
 def check_ollama():
-    """Ollamaの起動確認とモデルチェック"""
-    print("  Ollamaを確認中...")
-
-    # 1. Ollama接続チェック
+    """Ollamaの自動セットアップ（インストール・起動・モデルDL）"""
+    # ollama_setup.py を同一ディレクトリからインポート
     try:
-        req = urllib.request.Request(
-            f"{OLLAMA_BASE_URL}/api/tags",
-            headers={"User-Agent": f"AppTalentNavi/{APP_VERSION}"}
-        )
-        ctx = None
+        setup_dir = _BASE_PATH
+        if setup_dir not in sys.path:
+            sys.path.insert(0, setup_dir)
+        from ollama_setup import ensure_ollama_ready
+        return ensure_ollama_ready(RECOMMENDED_OLLAMA_MODEL)
+    except ImportError:
+        # ollama_setup.py が見つからない場合はフォールバック
+        print("  Ollamaを確認中...")
         try:
-            import ssl
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
+            req = urllib.request.Request(
+                f"{OLLAMA_BASE_URL}/api/tags",
+                headers={"User-Agent": f"AppTalentNavi/{APP_VERSION}"}
+            )
+            resp = urllib.request.urlopen(req, timeout=5)
+            data = json.loads(resp.read().decode("utf-8"))
+            models = [m.get("name", "") for m in data.get("models", [])]
+            if models:
+                print(f"  OK: Ollama接続成功（{len(models)} モデル利用可能）")
+                print()
+                return True
         except Exception:
             pass
-        resp = urllib.request.urlopen(req, timeout=5, context=ctx)
-        data = json.loads(resp.read().decode("utf-8"))
-    except Exception:
         print()
         print("  Ollamaに接続できません。")
-        print()
-        print("  以下を確認してください：")
-        print("  1. Ollamaがインストールされているか")
-        print("     → https://ollama.ai からダウンロード")
-        print("  2. Ollamaが起動しているか")
-        print("     → ターミナルで: ollama serve")
+        print("  https://ollama.com からインストールしてください。")
         print()
         return False
-
-    # 2. モデルチェック
-    models = [m.get("name", "") for m in data.get("models", [])]
-    model_names = [m.split(":")[0] for m in models]
-
-    has_recommended = any(RECOMMENDED_OLLAMA_MODEL.split(":")[0] in m for m in model_names)
-
-    if not models:
-        print()
-        print("  Ollamaにモデルがありません。")
-        print(f"  推奨モデルをダウンロードしてください：")
-        print(f"    ollama pull {RECOMMENDED_OLLAMA_MODEL}")
-        print()
-        return False
-
-    if has_recommended:
-        print(f"  OK: {RECOMMENDED_OLLAMA_MODEL} が利用可能です")
-    else:
-        print(f"  注意: 推奨モデル({RECOMMENDED_OLLAMA_MODEL})が見つかりません")
-        print(f"  利用可能なモデル: {', '.join(models[:5])}")
-        print(f"  推奨モデルのダウンロード: ollama pull {RECOMMENDED_OLLAMA_MODEL}")
-        print()
-        # 利用可能なモデルがあれば続行
-        if models:
-            print(f"  → {models[0]} を使用して続行します")
-
-    print()
-    return True
 
 
 def show_guide_menu():
@@ -194,8 +201,8 @@ def show_guide_menu():
     print("  ★1. データ抽出【おすすめ・初めての方はコチラ】")
     print("     20件の会議メモから情報を自動で整理 (約5分)")
     print()
-    print("   2. Web調査")
-    print("     気になるテーマをAIが調べてレポート作成 (約3分)")
+    print("   2. Webページ作成")
+    print("     指定テーマでHTMLページを自動生成 (約3分)")
     print()
     print("   3. ファイル整理")
     print("     散らばったファイルを自動で分類 (約3分)")
@@ -223,7 +230,7 @@ def show_guide_menu():
         elif choice == "2":
             print()
             try:
-                theme = input("  調査テーマを入力してください: ").strip()
+                theme = input("  どんなページを作りますか？（例: 自己紹介、カフェメニュー）: ").strip()
             except (EOFError, KeyboardInterrupt):
                 print()
                 sys.exit(0)
@@ -231,11 +238,11 @@ def show_guide_menu():
                 print("  テーマが入力されませんでした。もう一度選択してください。")
                 print()
                 continue
-            prompt = f"「{theme}」についてWeb検索で調査し、調査レポートをMarkdownファイルにまとめてください"
+            prompt = f"「{theme}」のHTMLページを作成してください。CSS・JSをインラインで含む、レスポンシブな1ファイル完結のWebページにしてください。output/ フォルダに保存してください"
             os.environ["HAJIME_INITIAL_PROMPT"] = prompt
             sys.argv.append("-y")
             print()
-            print(f"  → 「{theme}」のWeb調査を開始します...")
+            print(f"  → 「{theme}」のWebページを作成します...")
             print()
             return
 
@@ -265,6 +272,79 @@ def show_guide_menu():
 
         else:
             print("  1〜4の番号を入力してください。")
+            print()
+
+
+def _setup_workdir():
+    """作業フォルダを対話的に設定する。"""
+    # プラットフォームに応じたデフォルトパスを表示
+    home = os.path.expanduser("~")
+    if sys.platform == "win32":
+        downloads = os.path.join(home, "Downloads")
+        desktop = os.path.join(home, "Desktop")
+        documents = os.path.join(home, "Documents")
+    elif sys.platform == "darwin":
+        downloads = os.path.join(home, "Downloads")
+        desktop = os.path.join(home, "Desktop")
+        documents = os.path.join(home, "Documents")
+    else:
+        downloads = os.path.join(home, "Downloads")
+        desktop = os.path.join(home, "Desktop")
+        documents = os.path.join(home, "Documents")
+
+    print("  ━━ 作業フォルダの設定 ━━━━━━━━━━━━━━━━")
+    print()
+    print("  AIエージェントがファイルを読み書きする")
+    print("  メインの作業フォルダを選んでください。")
+    print()
+    print(f"   1. ダウンロード   {downloads}")
+    print(f"   2. デスクトップ   {desktop}")
+    print(f"   3. ドキュメント   {documents}")
+    print(f"   4. 現在のフォルダ {os.getcwd()}")
+    print("   5. パスを直接入力")
+    print()
+
+    while True:
+        try:
+            choice = input("  番号を入力 [1-5] (Enter で 4): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            sys.exit(0)
+
+        if choice == "1":
+            workdir = downloads
+        elif choice == "2":
+            workdir = desktop
+        elif choice == "3":
+            workdir = documents
+        elif choice == "" or choice == "4":
+            workdir = os.getcwd()
+        elif choice == "5":
+            print()
+            try:
+                workdir = input("  フォルダのパスを入力: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                sys.exit(0)
+            if not workdir:
+                print("  パスが入力されませんでした。もう一度選択してください。")
+                print()
+                continue
+        else:
+            print("  1〜5の番号を入力してください。")
+            print()
+            continue
+
+        # パスの存在確認
+        if os.path.isdir(workdir):
+            os.chdir(workdir)
+            print()
+            print(f"  → 作業フォルダ: {workdir}")
+            print()
+            return
+        else:
+            print(f"  フォルダが見つかりません: {workdir}")
+            print("  もう一度選択してください。")
             print()
 
 
@@ -336,12 +416,21 @@ def main():
         os.environ["OLLAMA_BASE_URL"] = OLLAMA_BASE_URL
         os.environ["CO_VIBE_MODEL"] = os.environ.get("CO_VIBE_MODEL", RECOMMENDED_OLLAMA_MODEL)
 
+    # === 作業フォルダ設定 ===
+    if not _should_skip_guide():
+        _setup_workdir()
+
     # === ガイドメニュー ===
     if not _should_skip_guide():
         show_guide_menu()
 
+    # exe時はユーザーデータディレクトリ情報を環境変数に設定
+    if getattr(sys, 'frozen', False):
+        os.environ["HAJIME_USER_DATA_DIR"] = _USER_DATA_DIR
+        os.environ["HAJIME_BASE_PATH"] = _BASE_PATH
+
     # co-vibe.py を実行
-    co_vibe_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "co-vibe.py")
+    co_vibe_path = os.path.join(_BASE_PATH, "co-vibe.py")
     if not os.path.exists(co_vibe_path):
         print(f"  エラー: co-vibe.py が見つかりません: {co_vibe_path}")
         sys.exit(1)

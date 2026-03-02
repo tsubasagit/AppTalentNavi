@@ -40,6 +40,17 @@ import collections
 import concurrent.futures
 import ssl
 
+# Windows: Force UTF-8 mode for all subprocess text operations (prevents cp932 errors)
+if sys.platform == "win32":
+    os.environ.setdefault("PYTHONUTF8", "1")
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 # readline is not available on Windows
 try:
     import readline
@@ -126,7 +137,6 @@ _HAJIME_MODE = os.environ.get("HAJIME_MODE") == "1"
 _HAJIME_APP_NAME = os.environ.get("HAJIME_APP_NAME", "AppTalentNavi")
 _HAJIME_APP_VERSION = os.environ.get("HAJIME_VERSION", "2.0.0")
 _HAJIME_CLOUD_IDE = os.environ.get("HAJIME_CLOUD_IDE")
-
 
 class RateLimitError(RuntimeError):
     """Raised when a provider returns HTTP 429 (rate limited)."""
@@ -1278,10 +1288,10 @@ data/meetings/ フォルダに20件の営業議事録があります。
 → これらを読み取り、構造化してCSVに整理してください。
 スキルファイル参照: {skills_dir}/data-extraction.md
 
-【シナリオB: Web調査】
-ユーザーが指定したテーマについてWebで調査し、レポートを作成してください。
-→ WebSearch で情報を検索し、WebFetch で詳細を取得し、Markdownレポートにまとめます。
-スキルファイル参照: {skills_dir}/web-research.md
+【シナリオB: Webページ作成】
+ユーザーが指定したテーマでHTMLページを作成してください。
+→ Write でHTMLファイルを作成します。見た目の良いレスポンシブなページを1ファイルで完結させてください（CSS・JSはインライン）。
+スキルファイル参照: {skills_dir}/web-creation.md
 
 【シナリオC: ファイル整理】
 散らばったファイルを分類・リネーム・フォルダ分けしてください。
@@ -8323,6 +8333,12 @@ class TUI:
             else:
                 print(f"  {_g}AIエージェントにタスクを依頼してみましょう！{C.RESET}")
             print(f"  {_d}/scenario で体験シナリオ一覧 • /help でコマンド一覧{C.RESET}")
+        if _provider_name == "Ollama":
+            print(f"  {_y}⚠ Ollama（ローカルLLM）はインターネットに接続していません。{C.RESET}")
+            print(f"  {_d}  • 日付が古い → 学習データのカットオフ時点の情報のみ{C.RESET}")
+            print(f"  {_d}  • 最新ニュースを知らない → Web検索ができない{C.RESET}")
+            print(f"  {_d}  • 事実が不正確なこともある → 小さいモデルほど精度が低下{C.RESET}")
+            print()
         if not config.yes_mode:
             print(f"  {_y}💡 -y オプションで自動承認モード（確認不要）{C.RESET}")
         print()
@@ -8513,7 +8529,10 @@ class TUI:
             _elapsed = _now - _stream_start
             _tok_display = f"{_approx_tokens / 1000:.1f}k" if _approx_tokens >= 1000 else str(_approx_tokens)
             _esc_note = " \u2014 ESC: stop" if HAS_TERMIOS else ""
-            _status_msg = f"\U0001f4ad Thinking... ({_elapsed:.0f}s \u00b7 \u2193 {_tok_display} tokens){_esc_note}"
+            if _HAJIME_MODE:
+                _status_msg = f"\U0001f4ad 考え中... ({_elapsed:.0f}s)"
+            else:
+                _status_msg = f"\U0001f4ad Thinking... ({_elapsed:.0f}s \u00b7 \u2193 {_tok_display} tokens){_esc_note}"
             _clear_w = max(len(_status_msg) + 6, 60)
             _lock = _sr._lock if _sr._active else _print_lock
             with _lock:
@@ -9156,9 +9175,9 @@ class TUI:
                 if show_elapsed:
                     elapsed = time.time() - _t0
                     if elapsed > 20:
-                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 deep reasoning in progress{C.RESET}"
+                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 {'AIが深く考えています' if _HAJIME_MODE else 'deep reasoning in progress'}{C.RESET}"
                     elif elapsed > 10:
-                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 model is processing{C.RESET}"
+                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 {'モデルが処理中です' if _HAJIME_MODE else 'model is processing'}{C.RESET}"
                     elif elapsed > 3:
                         suffix = f" ({int(elapsed)}s)"
                 _lock = _sr._lock if _sr._active else _print_lock
@@ -9195,7 +9214,11 @@ class TUI:
             _clear_len = 60
             while not self._spinner_stop.is_set():
                 elapsed = time.time() - _start
-                msg = f"{_icon} Running {tool_name}... ({elapsed:.0f}s)"
+                if _HAJIME_MODE:
+                    _jp = self._HAJIME_TOOL_LABELS.get(tool_name, tool_name)
+                    msg = f"{_icon} {_jp}中... ({elapsed:.0f}s)"
+                else:
+                    msg = f"{_icon} Running {tool_name}... ({elapsed:.0f}s)"
                 _padded = f"  {msg}"
                 _clear_len = max(_clear_len, len(_padded) + 4)
                 _lock = _sr._lock if _sr._active else _print_lock
@@ -9998,11 +10021,15 @@ class Agent:
                              if t.get("function", {}).get("name") in self.PLAN_MODE_TOOLS]
                 _esc_hint = " — ESC: stop" if HAS_TERMIOS else ""
                 if iteration == 0:
-                    self.tui.start_spinner(("Planning" if self._plan_mode else "Thinking") + _esc_hint)
+                    if _HAJIME_MODE:
+                        self.tui.start_spinner("考え中" + _esc_hint)
+                    else:
+                        self.tui.start_spinner(("Planning" if self._plan_mode else "Thinking") + _esc_hint)
                 else:
                     elapsed = int(time.time() - _start_time)
                     self.tui.start_spinner(
-                        f"{'Planning' if self._plan_mode else 'Thinking'} (step {iteration+1}, {elapsed}s){_esc_hint}"
+                        (f"考え中 (ステップ {iteration+1}, {elapsed}s){_esc_hint}" if _HAJIME_MODE else
+                         f"{'Planning' if self._plan_mode else 'Thinking'} (step {iteration+1}, {elapsed}s){_esc_hint}")
                     )
 
                 response = None
@@ -10164,7 +10191,8 @@ class Agent:
                                 tool_params = json.loads(fixed)
                             except (json.JSONDecodeError, ValueError, TypeError, KeyError):
                                 # Unsalvageable — report error to LLM instead of passing bad params
-                                results.append(ToolResult(tc_id, f"Error: tool arguments are not valid JSON: {raw_args[:200]}", True))
+                                _err_msg = f"ツールの引数が不正です: {raw_args[:200]}" if _HAJIME_MODE else f"Error: tool arguments are not valid JSON: {raw_args[:200]}"
+                                results.append(ToolResult(tc_id, _err_msg, True))
                                 continue
                     parsed_calls.append((tc_id, tool_name, tool_params))
 
@@ -10173,7 +10201,8 @@ class Agent:
                 for tc_id, tool_name, tool_params in parsed_calls:
                     tool = self.registry.get(tool_name)
                     if not tool:
-                        results.append(ToolResult(tc_id, f"Error: unknown tool '{tool_name}'", True))
+                        _err_msg = f"不明なツール: '{tool_name}'" if _HAJIME_MODE else f"Error: unknown tool '{tool_name}'"
+                        results.append(ToolResult(tc_id, _err_msg, True))
                         continue
                     # Canonicalize tool_name to registered name (defense-in-depth
                     # against case variations like "bash" vs "Bash")
@@ -10336,7 +10365,7 @@ class Agent:
                     response.close()
                 if text:
                     self.session.add_assistant_message(text)
-                _p(f"\n{C.YELLOW}Interrupted.{C.RESET}")
+                _p(f"\n{C.YELLOW}{'処理を中断しました。' if _HAJIME_MODE else 'Interrupted.'}{C.RESET}")
                 self._interrupted.set()
                 break
             except urllib.error.HTTPError as e:
@@ -10355,12 +10384,21 @@ class Agent:
                         e.close()
                     except (OSError, AttributeError):
                         pass  # cleanup best-effort
-                _p(f"\n{C.RED}HTTP {e.code} {e.reason}: {body}{C.RESET}")
-                if e.code == 404:
-                    _p(f"{C.DIM}The model '{self.config.model}' may not be available for your API key.{C.RESET}")
-                    _p(f"{C.DIM}Try a different model with --model or change strategy.{C.RESET}")
-                elif e.code == 400:
-                    _p(f"{C.DIM}The request was rejected — the model name or context may be invalid.{C.RESET}")
+                if _HAJIME_MODE:
+                    _p(f"\n{C.RED}HTTP {e.code} エラーが発生しました。{C.RESET}")
+                    if e.code == 404:
+                        _p(f"{C.DIM}モデル '{self.config.model}' が利用できない可能性があります。{C.RESET}")
+                    elif e.code == 400:
+                        _p(f"{C.DIM}リクエストが拒否されました。設定を確認してください。{C.RESET}")
+                    else:
+                        _p(f"{C.DIM}しばらく待ってからもう一度お試しください。{C.RESET}")
+                else:
+                    _p(f"\n{C.RED}HTTP {e.code} {e.reason}: {body}{C.RESET}")
+                    if e.code == 404:
+                        _p(f"{C.DIM}The model '{self.config.model}' may not be available for your API key.{C.RESET}")
+                        _p(f"{C.DIM}Try a different model with --model or change strategy.{C.RESET}")
+                    elif e.code == 400:
+                        _p(f"{C.DIM}The request was rejected — the model name or context may be invalid.{C.RESET}")
                 break
             except urllib.error.URLError as e:
                 self.tui.stop_spinner()
@@ -10368,9 +10406,13 @@ class Agent:
                     response.close()
                 if text:
                     self.session.add_assistant_message(text)
-                _p(f"\n{C.RED}Lost connection to API provider.{C.RESET}")
-                _p(f"{C.DIM}The API may be temporarily down, or your network connection dropped.{C.RESET}")
-                _p(f"{C.DIM}Your conversation is still here — just try again after restarting.{C.RESET}")
+                if _HAJIME_MODE:
+                    _p(f"\n{C.RED}AIとの接続が切れました。もう一度お試しください。{C.RESET}")
+                    _p(f"{C.DIM}ネットワーク接続を確認して、再度お試しください。{C.RESET}")
+                else:
+                    _p(f"\n{C.RED}Lost connection to API provider.{C.RESET}")
+                    _p(f"{C.DIM}The API may be temporarily down, or your network connection dropped.{C.RESET}")
+                    _p(f"{C.DIM}Your conversation is still here — just try again after restarting.{C.RESET}")
                 break
             except Exception as e:
                 self.tui.stop_spinner()
@@ -10378,17 +10420,25 @@ class Agent:
                     response.close()
                 if text:
                     self.session.add_assistant_message(text)
-                _p(f"\n{C.RED}Something went wrong: {e}{C.RESET}")
-                _p(f"{C.DIM}Your conversation is still active. Try your request again.{C.RESET}")
-                if self.config.debug:
-                    traceback.print_exc()
+                if _HAJIME_MODE:
+                    _p(f"\n{C.RED}エラーが発生しました: {e}{C.RESET}")
+                    _p(f"{C.DIM}もう一度お試しください。{C.RESET}")
                 else:
-                    _p(f"{C.DIM}(Run with --debug for full details){C.RESET}")
+                    _p(f"\n{C.RED}Something went wrong: {e}{C.RESET}")
+                    _p(f"{C.DIM}Your conversation is still active. Try your request again.{C.RESET}")
+                if not _HAJIME_MODE:
+                    if self.config.debug:
+                        traceback.print_exc()
+                    else:
+                        _p(f"{C.DIM}(Run with --debug for full details){C.RESET}")
                 break
         else:
-            _p(f"\n{C.YELLOW}The AI took {self.MAX_ITERATIONS} steps without finishing.{C.RESET}")
-            _p(f"{C.DIM}Your work so far is saved. Try breaking the task into smaller steps,{C.RESET}")
-            _p(f"{C.DIM}or type /compact to free up context and continue.{C.RESET}")
+            if _HAJIME_MODE:
+                _p(f"\n{C.YELLOW}AIが処理上限（{self.MAX_ITERATIONS}ステップ）に達しました。タスクを小さく分割してみてください。{C.RESET}")
+            else:
+                _p(f"\n{C.YELLOW}The AI took {self.MAX_ITERATIONS} steps without finishing.{C.RESET}")
+                _p(f"{C.DIM}Your work so far is saved. Try breaking the task into smaller steps,{C.RESET}")
+                _p(f"{C.DIM}or type /compact to free up context and continue.{C.RESET}")
 
         # Record execution in ExecutionMemory for future tier recommendations
         _run_duration = time.time() - _start_time
@@ -10579,8 +10629,11 @@ def main():
                 pct = min(int((session.get_token_estimate() / config.context_window) * 100), 100)
                 _show_resume_info(f"session: {config.session_id}", msgs, pct, session.messages)
             else:
-                print(f"{C.RED}No saved session found with ID '{config.session_id}'.{C.RESET}")
-                print(f"{C.DIM}List sessions: python3 co-vibe.py --list-sessions{C.RESET}")
+                if _HAJIME_MODE:
+                    print(f"{C.RED}セッションが見つかりません: '{config.session_id}'{C.RESET}")
+                else:
+                    print(f"{C.RED}No saved session found with ID '{config.session_id}'.{C.RESET}")
+                    print(f"{C.DIM}List sessions: python3 co-vibe.py --list-sessions{C.RESET}")
                 return
         else:
             # First try to find a session for the current working directory
@@ -10713,9 +10766,9 @@ def main():
      顧客名・クレーム内容・担当者名をCSVに整理
      → {_sh}「会議メモからデータを抽出して」{C.RESET}
 
-  {_sg}B. Web調査{C.RESET}
-     指定テーマをWeb検索で調査しレポート作成
-     → {_sh}「AIエージェントの市場動向を調べて」{C.RESET}
+  {_sg}B. Webページ作成{C.RESET}
+     指定テーマでHTMLページを自動生成
+     → {_sh}「自己紹介ページを作って」{C.RESET}
 
   {_sg}C. ファイル整理{C.RESET}
      散らばったファイルを分類・リネーム・整理
@@ -10730,8 +10783,11 @@ def main():
                     session.session_id = (
                         datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:6]
                     )
-                    print(f"{C.GREEN}Conversation cleared.{C.RESET}")
-                    print(f"{C.DIM}Previous session saved as: {old_sid}{C.RESET}")
+                    if _HAJIME_MODE:
+                        print(f"{C.GREEN}会話をリセットしました。{C.RESET}")
+                    else:
+                        print(f"{C.GREEN}Conversation cleared.{C.RESET}")
+                        print(f"{C.DIM}Previous session saved as: {old_sid}{C.RESET}")
                     continue
                 elif cmd == "/status":
                     tui.show_status(session, config, client=client)

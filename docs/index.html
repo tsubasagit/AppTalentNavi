@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppTalentNavi — AIエージェント体験 研修ツール</title>
+<meta name="description" content="Windowsで動く、AIエージェント体験研修ツール。ダウンロードして実行するだけ。Pythonもインストール不要。">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --accent: #f59e0b;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --border: #e2e8f0;
+  --success: #10b981;
+  --gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+}
+
+body {
+  font-family: 'Segoe UI', 'Yu Gothic UI', 'Hiragino Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hero Section */
+.hero {
+  background: var(--gradient);
+  color: white;
+  padding: 80px 20px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.hero .version {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+.hero .subtitle {
+  font-size: 1.25rem;
+  opacity: 0.95;
+  max-width: 600px;
+  margin: 0 auto 32px;
+  font-weight: 400;
+}
+
+.hero .cta-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.btn-icon {
+  font-size: 1.3rem;
+}
+
+/* Container */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Section */
+section {
+  padding: 64px 20px;
+}
+
+section h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+section .section-desc {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 1.05rem;
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* What is it */
+.what-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.what-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s;
+}
+
+.what-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.what-card .icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+}
+
+.what-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.what-card p {
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+/* Difference Section */
+.diff-section {
+  background: white;
+}
+
+.diff-table {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.diff-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.diff-table th, .diff-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.diff-table th {
+  background: #f1f5f9;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+}
+
+.diff-table tr:last-child td {
+  border-bottom: none;
+}
+
+.diff-table .highlight {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.diff-table .check {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.diff-table .cross {
+  color: #ef4444;
+}
+
+/* Steps */
+.steps {
+  display: flex;
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.step {
+  flex: 1;
+  min-width: 200px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.step .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gradient);
+  color: white;
+  font-weight: 800;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+}
+
+.step h3 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.step p {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* Demo/Terminal */
+.demo-section {
+  background: white;
+}
+
+.terminal {
+  max-width: 720px;
+  margin: 0 auto;
+  background: #1e1e2e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.terminal-header {
+  background: #313244;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-dot.red { background: #f38ba8; }
+.terminal-dot.yellow { background: #f9e2af; }
+.terminal-dot.green { background: #a6e3a1; }
+
+.terminal-title {
+  color: #a6adc8;
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+
+.terminal-body {
+  padding: 20px;
+  font-family: 'Cascadia Code', 'Consolas', 'SF Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #cdd6f4;
+  overflow-x: auto;
+}
+
+.terminal-body .prompt {
+  color: #a6e3a1;
+}
+
+.terminal-body .info {
+  color: #89b4fa;
+}
+
+.terminal-body .accent {
+  color: #f9e2af;
+}
+
+.terminal-body .dim {
+  color: #6c7086;
+}
+
+.terminal-body .success {
+  color: #a6e3a1;
+}
+
+/* Architecture */
+.arch-section {
+  background: var(--bg);
+}
+
+.arch-diagram {
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid var(--border);
+}
+
+.arch-layer {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.arch-layer:last-child {
+  margin-bottom: 0;
+}
+
+.arch-layer .layer-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.arch-layer .layer-desc {
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.arch-layer.l1 { border-color: #2563eb; background: #eff6ff; }
+.arch-layer.l2 { border-color: #7c3aed; background: #f5f3ff; }
+.arch-layer.l3 { border-color: #059669; background: #ecfdf5; }
+.arch-layer.l4 { border-color: #d97706; background: #fffbeb; }
+
+.arch-arrow {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 1.2rem;
+  margin: 4px 0;
+}
+
+/* Scenarios */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.scenario-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 28px 24px;
+  border: 1px solid var(--border);
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+
+.scenario-card:hover {
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.scenario-card .scenario-icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+}
+
+.scenario-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.scenario-card .before-after {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.scenario-card .arrow {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Requirements */
+.req-section {
+  background: white;
+}
+
+.req-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.req-card {
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.req-card h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.req-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.req-card li {
+  padding: 6px 0;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.req-card li::before {
+  content: "\2713";
+  color: var(--success);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* FAQ */
+.faq-list {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+
+.faq-item h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.faq-item p {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* Footer */
+footer {
+  background: #1e293b;
+  color: #94a3b8;
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+footer a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 1.8rem; }
+  .hero .subtitle { font-size: 1rem; }
+  .what-grid { grid-template-columns: 1fr; }
+  .scenario-grid { grid-template-columns: 1fr; }
+  .req-grid { grid-template-columns: 1fr; }
+  .steps { flex-direction: column; }
+  section { padding: 48px 16px; }
+  .btn { padding: 14px 24px; font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="version">v2.0</div>
+  <h1>AppTalentNavi</h1>
+  <p class="subtitle">AIエージェントが目の前でタスクを自動遂行する<br>その過程をまるごと体験できる研修ツール</p>
+  <div class="cta-group">
+    <a href="https://github.com/tsubasagit/AppTalentNavi/releases/latest" class="btn btn-primary">
+      <span class="btn-icon">&#11015;</span> Windows版をダウンロード
+    </a>
+    <a href="https://github.com/tsubasagit/AppTalentNavi" class="btn btn-secondary">
+      <span class="btn-icon">&#128209;</span> GitHub で見る
+    </a>
+  </div>
+</section>
+
+<!-- What is it -->
+<section>
+  <div class="container">
+    <h2>AppTalentNavi とは？</h2>
+    <p class="section-desc">AIが自律的にファイルを読み取り、分析し、結果を書き出す。<br>その全過程を目の前で体験できるWindows対応の研修ツールです。</p>
+    <div class="what-grid">
+      <div class="what-card">
+        <div class="icon">&#129302;</div>
+        <h3>AIエージェントを目撃する</h3>
+        <p>ChatGPTのように「結果だけ」ではありません。AIがファイルを開き、中身を読み、考え、結果を書き出す — その全てのステップが画面上にリアルタイムで表示されます。</p>
+      </div>
+      <div class="what-card">
+        <div class="icon">&#128187;</div>
+        <h3>Windowsでそのまま動く</h3>
+        <p>exeファイルをダブルクリックするだけ。Pythonのインストールも、コマンドの知識も不要。USBメモリで配布して、教室の全PCで即起動できます。</p>
+      </div>
+      <div class="what-card">
+        <div class="icon">&#128274;</div>
+        <h3>オフラインでも動作</h3>
+        <p>Ollama（ローカルAI）を使えば、インターネット接続不要。企業の社内研修や、ネットワーク制限のある学校でも安心して使えます。</p>
+      </div>
+      <div class="what-card">
+        <div class="icon">&#128218;</div>
+        <h3>研修パッケージ付き</h3>
+        <p>90分の研修カリキュラム、講師ガイド、トラブルシューティングガイド付き。研修の準備がすぐに整います。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Difference -->
+<section class="diff-section">
+  <div class="container">
+    <h2>他のAIツールとの違い</h2>
+    <p class="section-desc">「AIを使う」のではなく「AIが自律的に動く過程を見る」体験</p>
+    <div class="diff-table">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>AppTalentNavi</th>
+            <th>ChatGPT / Gemini</th>
+            <th>Claude Artifacts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AIの動作</td>
+            <td class="highlight">ファイル操作・コマンド実行を自律遂行</td>
+            <td>テキスト回答のみ</td>
+            <td>サンドボックス内で生成</td>
+          </tr>
+          <tr>
+            <td>過程の可視化</td>
+            <td class="check">全ステップを表示</td>
+            <td class="cross">結果のみ</td>
+            <td class="cross">結果のみ</td>
+          </tr>
+          <tr>
+            <td>ローカルファイル操作</td>
+            <td class="check">PC内のファイルを直接読み書き</td>
+            <td class="cross">不可</td>
+            <td class="cross">不可</td>
+          </tr>
+          <tr>
+            <td>オフライン動作</td>
+            <td class="check">Ollama利用で完全オフライン</td>
+            <td class="cross">オンライン必須</td>
+            <td class="cross">オンライン必須</td>
+          </tr>
+          <tr>
+            <td>研修利用</td>
+            <td class="check">講師ガイド・カリキュラム付き</td>
+            <td class="cross">なし</td>
+            <td class="cross">なし</td>
+          </tr>
+          <tr>
+            <td>日本語UI</td>
+            <td class="check">完全日本語対応</td>
+            <td class="check">対応</td>
+            <td>部分的</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 3 Scenarios -->
+<section>
+  <div class="container">
+    <h2>3つの体験シナリオ</h2>
+    <p class="section-desc">起動したらメニューで番号を選ぶだけ。すぐに体験が始まります。</p>
+    <div class="scenario-grid">
+      <div class="scenario-card">
+        <div class="scenario-icon">&#128202;</div>
+        <h3>A. データ抽出</h3>
+        <p>20件の会議メモをAIが自動で読み取り、顧客名・担当者・内容をCSVに整理</p>
+        <div class="before-after">
+          <span>バラバラの議事録</span>
+          <span class="arrow">&rarr;</span>
+          <span>整理されたCSV</span>
+        </div>
+      </div>
+      <div class="scenario-card">
+        <div class="scenario-icon">&#127760;</div>
+        <h3>B. Webページ作成</h3>
+        <p>テーマを伝えるだけで、AIがHTMLファイルを自動生成。ブラウザで即確認</p>
+        <div class="before-after">
+          <span>「自己紹介」</span>
+          <span class="arrow">&rarr;</span>
+          <span>完成したWebページ</span>
+        </div>
+      </div>
+      <div class="scenario-card">
+        <div class="scenario-icon">&#128193;</div>
+        <h3>C. ファイル整理</h3>
+        <p>散らばったファイルをAIが自動で種類ごとにフォルダ分け・リネーム</p>
+        <div class="before-after">
+          <span>バラバラのファイル</span>
+          <span class="arrow">&rarr;</span>
+          <span>整理されたフォルダ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Demo Terminal -->
+<section class="demo-section">
+  <div class="container">
+    <h2>実際の動作イメージ</h2>
+    <p class="section-desc">起動するとこんな画面が表示されます</p>
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <span class="terminal-title">AppTalentNavi v2.0</span>
+      </div>
+      <div class="terminal-body">
+<pre>
+  <span class="info">&#9556;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9559;</span>
+  <span class="info">&#9553;</span>  AppTalentNavi v2.0                  <span class="info">&#9553;</span>
+  <span class="info">&#9553;</span>  AIエージェント体験 研修ツール        <span class="info">&#9553;</span>
+  <span class="info">&#9562;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9565;</span>
+
+  <span class="accent">&#9473;&#9473; 体験メニュー &#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;</span>
+
+  <span class="accent">&#9733;</span>1. データ抽出<span class="dim">【おすすめ】</span>
+     <span class="dim">20件の会議メモから情報を自動で整理</span>
+
+   2. Webページ作成
+     <span class="dim">指定テーマでHTMLページを自動生成</span>
+
+   3. ファイル整理
+     <span class="dim">散らばったファイルを自動で分類</span>
+
+  番号を入力 [1-4]: <span class="prompt">1 &#9646;</span>
+
+  <span class="success">&#8594; データ抽出シナリオを開始します...</span>
+
+  <span class="dim">&#9484; ファイル一覧 (Glob)</span>
+  <span class="dim">&#9474;</span> data/meetings/ 内の 20 ファイルを検出
+  <span class="dim">&#9492;&#9472;</span> <span class="success">完了</span>
+
+  <span class="dim">&#9484; ファイル読み取り (Read)</span>
+  <span class="dim">&#9474;</span> meeting_20260115_001.txt を読み取り中...
+</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How to use -->
+<section>
+  <div class="container">
+    <h2>使い方（3ステップ）</h2>
+    <p class="section-desc">Windowsなら、ダウンロードして実行するだけ</p>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>ダウンロード</h3>
+        <p>GitHub Releases から<br><strong>AppTalentNavi.exe</strong> を<br>ダウンロード</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>ダブルクリック</h3>
+        <p>ダウンロードした exe を<br>ダブルクリックで起動<br><small style="color:var(--text-light)">※初回はWindows SmartScreenが出る場合があります</small></p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>番号を選ぶ</h3>
+        <p>体験メニューから<br>やりたいシナリオの<br>番号を入力するだけ</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="arch-section">
+  <div class="container">
+    <h2>仕組み</h2>
+    <p class="section-desc">4つのレイヤーで構成されています</p>
+    <div class="arch-diagram">
+      <div class="arch-layer l1">
+        <div class="layer-title">AppTalentNavi (hajime.py)</div>
+        <div class="layer-desc">環境検出 / LLM自動セットアップ / 体験メニュー</div>
+      </div>
+      <div class="arch-arrow">&darr;</div>
+      <div class="arch-layer l2">
+        <div class="layer-title">co-vibe.py (AIエージェントエンジン)</div>
+        <div class="layer-desc">日本語UI / ツール自律実行 / スキル読み込み</div>
+      </div>
+      <div class="arch-arrow">&darr;</div>
+      <div class="arch-layer l3">
+        <div class="layer-title">ollama_setup.py (LLM環境管理)</div>
+        <div class="layer-desc">Ollamaの自動インストール / 起動 / モデル取得</div>
+      </div>
+      <div class="arch-arrow">&darr;</div>
+      <div class="arch-layer l4">
+        <div class="layer-title">LLM プロバイダー</div>
+        <div class="layer-desc">Gemini 2.5 Flash Lite（クラウド） / Ollama + qwen2.5-coder:7b（ローカル）</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Requirements -->
+<section class="req-section">
+  <div class="container">
+    <h2>動作環境</h2>
+    <p class="section-desc">2つの動作モードから選べます</p>
+    <div class="req-grid">
+      <div class="req-card">
+        <h3>&#9729;&#65039; クラウドモード（推奨）</h3>
+        <ul>
+          <li>Windows 10 / 11</li>
+          <li>インターネット接続</li>
+          <li>Gemini APIキー（無料で取得可能）</li>
+          <li>Pythonは不要（exe版の場合）</li>
+        </ul>
+      </div>
+      <div class="req-card">
+        <h3>&#128421;&#65039; オフラインモード</h3>
+        <ul>
+          <li>Windows 10 / 11</li>
+          <li>RAM 8GB以上（16GB推奨）</li>
+          <li>Ollama（自動インストール対応）</li>
+          <li>インターネット不要（初回セットアップ後）</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="container">
+    <h2>よくある質問</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>Q. プログラミングの知識は必要ですか？</h3>
+        <p>A. いいえ、全く不要です。メニューから番号を選ぶだけで体験できます。プログラミング未経験の高校生でも問題なく使えるよう設計しています。</p>
+      </div>
+      <div class="faq-item">
+        <h3>Q. exeを実行したら「WindowsによってPCが保護されました」と出ました</h3>
+        <p>A. Windows SmartScreenの警告です。「詳細情報」をクリック → 「実行」を選んでください。オープンソースソフトウェアのため、コード署名がないことが原因です。</p>
+      </div>
+      <div class="faq-item">
+        <h3>Q. Gemini APIキーはどこで取得できますか？</h3>
+        <p>A. <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a> で無料で取得できます。Googleアカウントがあれば数分で発行されます。</p>
+      </div>
+      <div class="faq-item">
+        <h3>Q. 社内のセキュリティポリシーでクラウドAPIが使えません</h3>
+        <p>A. Ollama（ローカルAI）モードなら、一切のデータが外部に送信されません。初回セットアップ時にOllamaとモデルをダウンロードすれば、以降はオフラインで動作します。</p>
+      </div>
+      <div class="faq-item">
+        <h3>Q. 研修で使う場合、何人まで同時に使えますか？</h3>
+        <p>A. Ollamaモード：各PCで独立動作するため人数制限なし。Geminiモード：無料枠には利用制限があるため、30名超の場合は有料プランまたはOllamaの併用を推奨します。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>AppTalentNavi v2.0 &mdash; AIエージェント体験 研修ツール</p>
+  <p style="margin-top:8px;">
+    <a href="https://github.com/tsubasagit/AppTalentNavi">GitHub</a> &nbsp;|&nbsp;
+    <a href="https://github.com/tsubasagit/AppTalentNavi/releases">Releases</a> &nbsp;|&nbsp;
+    MIT License
+  </p>
+  <p style="margin-top:12px; font-size:0.8rem;">
+    Powered by <a href="https://github.com/ochyai/co-vibe">co-vibe</a> &mdash; &copy; 2026 AppTalentHub
+  </p>
+</footer>
+
+</body>
+</html>
