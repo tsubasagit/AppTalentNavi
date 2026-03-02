@@ -349,19 +349,52 @@ def _setup_workdir():
 
 
 def _should_skip_guide():
-    """ガイドメニューをスキップすべきか判定する。"""
+    """ガイドメニュー・作業フォルダ入力をスキップすべきか判定する。"""
     for arg in sys.argv[1:]:
         if arg in ("-p", "--prompt"):
             return True
         if arg.startswith("-p=") or arg.startswith("--prompt="):
             return True
-    if "--skip-guide" in sys.argv:
-        sys.argv.remove("--skip-guide")
-        return True
+        if arg == "--skip-guide":
+            return True
     return False
 
 
+def _is_cli_only_request():
+    """LLM不要のCLI専用オプション（--help / --version / --list-sessions）のみか判定する。
+    研修で「コマンドでエラーが出ないか」を確認するため、対話なしで co-vibe に渡す。"""
+    cli_only = {"-h", "--help", "--version", "--list-sessions"}
+    for arg in sys.argv[1:]:
+        if arg in cli_only:
+            return True
+        if arg.startswith("--session-id"):  # --session-id は値が必要なので単体では判定しない
+            continue
+    return False
+
+
+def _exec_co_vibe_early():
+    """CLI専用オプション用に、対話・APIチェックをスキップして co-vibe を実行する。"""
+    os.environ["HAJIME_MODE"] = "1"
+    os.environ["HAJIME_VERSION"] = APP_VERSION
+    os.environ["HAJIME_APP_NAME"] = APP_NAME
+    if getattr(sys, "frozen", False):
+        os.environ["HAJIME_USER_DATA_DIR"] = _USER_DATA_DIR
+        os.environ["HAJIME_BASE_PATH"] = _BASE_PATH
+    co_vibe_path = os.path.join(_BASE_PATH, "co-vibe.py")
+    if not os.path.exists(co_vibe_path):
+        print(f"  エラー: co-vibe.py が見つかりません: {co_vibe_path}")
+        sys.exit(1)
+    sys.argv[0] = co_vibe_path
+    code = open(co_vibe_path, encoding="utf-8").read()
+    exec(compile(code, co_vibe_path, "exec"), globals())
+
+
 def main():
+    # CLI専用オプション（--help / --version / --list-sessions）の場合は対話・APIチェックをスキップ
+    if _is_cli_only_request():
+        _exec_co_vibe_early()
+        return
+
     print_header()
 
     use_gemini = False
@@ -428,6 +461,10 @@ def main():
     if getattr(sys, 'frozen', False):
         os.environ["HAJIME_USER_DATA_DIR"] = _USER_DATA_DIR
         os.environ["HAJIME_BASE_PATH"] = _BASE_PATH
+
+    # co-vibe.py に渡す前に hajime 専用オプションを除去（co-vibe の argparse が未知オプションで落ちないように）
+    while "--skip-guide" in sys.argv:
+        sys.argv.remove("--skip-guide")
 
     # co-vibe.py を実行
     co_vibe_path = os.path.join(_BASE_PATH, "co-vibe.py")
