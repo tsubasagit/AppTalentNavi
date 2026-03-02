@@ -244,9 +244,20 @@ exe版はWindows専用ですが、Python版はmacOS・Linuxでも動作します
 
 ---
 
+## 開発の背景
+
+開発者の宮崎翼は、東京都稲城市で子どものためのプログラミングサークル [CoderDojo 稲城](https://coderdojo-inagi.doorkeeper.jp/) を運営しています。
+
+Gemini や ChatGPT などのクラウドAIは、課金が必要だったり年齢制限が厳格だったりと、子どもたちが自由に学ぶにはハードルがあります。**「お金も年齢も関係なく、誰でもAIやプログラミングを体験できる環境を用意したい」** ——そんな思いから AppTalentNavi は生まれました。
+
+一緒にAIやプログラミングを勉強したい方は、ぜひ稲城市に遊びに来てください！
+
+---
+
 ## お問い合わせ
 
-- **開発・運営**: 株式会社AppTalentHub
+- **開発・運営**: 株式会社AppTalentHub（開発者: 宮崎翼）
 - **研修導入・カスタマイズのご相談**: [お問い合わせフォーム](https://share-na2.hsforms.com/2T1pQ6j2sQzajdd3AIDeWqgcy93d?utm_source=appnavi-v2)
+- **CoderDojo 稲城**: [https://coderdojo-inagi.doorkeeper.jp/](https://coderdojo-inagi.doorkeeper.jp/)
 - **バグ報告・機能リクエスト**: [GitHub Issues](https://github.com/tsubasagit/AppTalentNavi/issues)
 - **ランディングページ**: [https://tsubasagit.github.io/AppTalentNavi/](https://tsubasagit.github.io/AppTalentNavi/)
