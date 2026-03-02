@@ -236,6 +236,14 @@ exe版はWindows専用ですが、Python版はmacOS・Linuxでも動作します
 
 ---
 
+## 謝辞・co-vibe について
+
+本プロジェクトのAIエージェントエンジン（`co-vibe.py`）は、落合陽一氏が開発するオープンソースプロジェクト [co-vibe](https://github.com/ochyai/co-vibe)（MIT License）を元に、研修用途向けに機能を調整したものです。
+
+> **注意**: AppTalentNavi は株式会社AppTalentHub が独自に開発・運営するプロダクトであり、co-vibe プロジェクトおよび落合陽一氏との公式な提携・協力関係はありません。
+
+---
+
 ## お問い合わせ
 
 - **開発・運営**: 株式会社AppTalentHub
