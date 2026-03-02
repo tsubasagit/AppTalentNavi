@@ -8,6 +8,11 @@
 <meta property="og:title" content="AppTalentNavi — AIエージェント体験ツール">
 <meta property="og:description" content="AIが自律的にファイルを読み、分析し、結果を書き出す全過程を体験。">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://tsubasagit.github.io/AppTalentNavi/images/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://tsubasagit.github.io/AppTalentNavi/images/ogp.png">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -732,12 +737,12 @@ section { padding: 80px 20px; }
 }
 
 .cta-section .cta-chars img {
-  height: 180px;
+  height: auto;
+  max-width: 480px;
+  border-radius: 20px;
   filter: drop-shadow(0 4px 16px rgba(0,0,0,0.1));
+  animation: floatSlow 4s ease-in-out infinite;
 }
-
-.cta-section .cta-chars img:first-child { animation: float 3s ease-in-out infinite; }
-.cta-section .cta-chars img:last-child { animation: floatSlow 4s ease-in-out infinite; animation-delay: 0.5s; }
 
 .cta-section h2 {
   font-size: 1.8rem;
@@ -909,7 +914,7 @@ footer a:hover { text-decoration: underline; }
     </div>
     <div class="diff-wrapper reveal">
       <div class="diff-char">
-        <img src="images/mirai-point.png" alt="ミライ">
+        <img src="images/mirai-teacher.png" alt="ミライ先生">
       </div>
       <div class="diff-table">
         <table>
@@ -1043,6 +1048,10 @@ footer a:hover { text-decoration: underline; }
         <p>体験メニューから<br>やりたいシナリオの<br>番号を入力するだけ！</p>
       </div>
     </div>
+    <div style="text-align:center; margin-top:40px;" class="reveal">
+      <img src="images/rapitto-typing.jpg" alt="ラピットくんがパソコンでコーディング中" style="width:280px; border-radius:20px; box-shadow:0 8px 32px rgba(0,0,0,0.1); animation: floatSlow 4s ease-in-out infinite;">
+      <p style="margin-top:12px; font-size:0.88rem; color:var(--text-mid);">ラピットくんもワクワクしながら実行中…！</p>
+    </div>
   </div>
 </section>
 
@@ -1115,8 +1124,7 @@ footer a:hover { text-decoration: underline; }
 <!-- ===== CTA ===== -->
 <section class="cta-section">
   <div class="cta-chars">
-    <img src="images/rapitto-run.png" alt="ラピットくん">
-    <img src="images/mirai-hero.png" alt="ミライ">
+    <img src="images/ogp.png" alt="ミライちゃんとラピットくん" style="height:auto; max-width:480px; border-radius:20px;">
   </div>
   <h2>さっそく体験してみよう！</h2>
   <p>ダウンロードして、ダブルクリック。<br>AIエージェントが動き出す瞬間を目撃しよう。</p>
