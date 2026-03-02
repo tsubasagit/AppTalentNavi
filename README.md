@@ -167,6 +167,56 @@ training-service-wip/
 
 ---
 
+## よくある質問
+
+<details>
+<summary><strong>プログラミングの知識は必要？</strong></summary>
+全く不要です。メニューから番号を選ぶだけで体験できます。
+</details>
+
+<details>
+<summary><strong>無料で使える？商用利用は？</strong></summary>
+完全無料です。MITライセンスのため、商用・非商用を問わず自由にご利用いただけます。
+</details>
+
+<details>
+<summary><strong>入力データは外部に送信される？</strong></summary>
+
+- **Geminiモード**: 入力内容は Google Gemini API に送信されます
+- **Ollamaモード**: 全てローカルPC内で処理。データは一切外部に送信されません
+
+機密データを扱う研修では Ollama モードをおすすめします。
+</details>
+
+<details>
+<summary><strong>「WindowsによってPCが保護されました」と表示された</strong></summary>
+Windows SmartScreen の警告です。「詳細情報」→「実行」を選んでください。オープンソースソフトのためコード署名がないことが原因です。ソースコードは全てこのリポジトリで公開されています。
+</details>
+
+<details>
+<summary><strong>ウイルス対策ソフトにブロックされた</strong></summary>
+PyInstallerで生成したexeは一部のセキュリティソフトで誤検知されることがあります。ホワイトリストへの追加、またはPython版（<code>python hajime.py</code>）での実行をお試しください。
+</details>
+
+<details>
+<summary><strong>Mac / Linux でも使える？</strong></summary>
+exe版はWindows専用ですが、Python版はmacOS・Linuxでも動作します。GitHub Codespacesを使えばブラウザだけで体験できます。
+</details>
+
+<details>
+<summary><strong>Gemini APIキーはどこで取れる？</strong></summary>
+<a href="https://aistudio.google.com/apikey">Google AI Studio</a> で無料取得できます。Googleアカウントがあれば数分で発行されます。
+</details>
+
+<details>
+<summary><strong>研修で何人まで同時に使える？</strong></summary>
+
+- **Ollamaモード**: 各PCで独立動作するため人数制限なし
+- **Geminiモード**: 無料枠に利用制限があるため、30名超の場合はOllamaの併用がおすすめです
+</details>
+
+---
+
 ## ドキュメント
 
 | ファイル | 内容 |
@@ -180,4 +230,15 @@ training-service-wip/
 
 ## ライセンス
 
-MIT License. Copyright (c) 2026 Yoichi Ochiai.
+[MIT License](LICENSE) — Copyright (c) 2026 株式会社AppTalentHub
+
+本ソフトウェアはオープンソースです。商用・非商用を問わず、自由にご利用いただけます。
+
+---
+
+## お問い合わせ
+
+- **開発・運営**: 株式会社AppTalentHub
+- **研修導入・カスタマイズのご相談**: [お問い合わせフォーム](https://share-na2.hsforms.com/2T1pQ6j2sQzajdd3AIDeWqgcy93d?utm_source=appnavi-v2)
+- **バグ報告・機能リクエスト**: [GitHub Issues](https://github.com/tsubasagit/AppTalentNavi/issues)
+- **ランディングページ**: [https://tsubasagit.github.io/AppTalentNavi/](https://tsubasagit.github.io/AppTalentNavi/)

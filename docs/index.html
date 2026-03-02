@@ -1116,6 +1116,26 @@ footer a:hover { text-decoration: underline; }
           <div class="q">研修で何人まで同時に使える？</div>
           <div class="a">Ollamaモード：各PCで独立動作するため人数制限なし。Geminiモード：無料枠に利用制限があるため、30名超の場合はOllamaの併用がおすすめです。</div>
         </div>
+        <div class="faq-item reveal">
+          <div class="q">無料で使える？商用利用は？</div>
+          <div class="a">はい、完全無料です。MITライセンスのオープンソースソフトウェアのため、商用・非商用を問わず自由にご利用いただけます。ソースコードは<a href="https://github.com/tsubasagit/AppTalentNavi" target="_blank">GitHub</a>で公開しています。</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="q">入力したデータや会話内容は外部に送信される？</div>
+          <div class="a"><strong>Geminiモード</strong>：入力内容はGoogle Gemini APIに送信されます。Google のプライバシーポリシーに準拠します。<br><strong>Ollamaモード</strong>：全てローカルPC内で処理されるため、データは一切外部に送信されません。機密データを扱う研修ではOllamaモードをおすすめします。</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="q">Mac や Linux でも使える？</div>
+          <div class="a">exe版はWindows専用ですが、Python版（<code>python hajime.py</code>）はmacOS・Linuxでも動作します。また、GitHub Codespacesを使えばブラウザだけで体験できます。</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="q">ウイルス対策ソフトにブロックされた</div>
+          <div class="a">PyInstallerで生成したexeファイルは、一部のウイルス対策ソフトで誤検知されることがあります。ソースコードは全て公開されているため安全です。ホワイトリストへの追加、またはPython版での実行をお試しください。</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="q">研修導入やカスタマイズの相談をしたい</div>
+          <div class="a">お気軽に<a href="https://share-na2.hsforms.com/2T1pQ6j2sQzajdd3AIDeWqgcy93d?utm_source=appnavi-v2" target="_blank">お問い合わせフォーム</a>よりご連絡ください。カスタムシナリオの追加や、オンサイト研修の実施についてもご相談を承ります。</div>
+        </div>
       </div>
     </div>
   </div>
@@ -1132,22 +1152,30 @@ footer a:hover { text-decoration: underline; }
     <a href="https://github.com/tsubasagit/AppTalentNavi/releases/latest" class="btn btn-primary">
       Windows版をダウンロード
     </a>
+    <a href="https://share-na2.hsforms.com/2T1pQ6j2sQzajdd3AIDeWqgcy93d?utm_source=appnavi-v2" class="btn btn-outline" target="_blank">
+      研修導入のお問い合わせ
+    </a>
     <a href="https://github.com/tsubasagit/AppTalentNavi" class="btn btn-outline">
-      GitHub でコードを見る
+      GitHub
     </a>
   </div>
 </section>
 
 <!-- ===== Footer ===== -->
 <footer>
-  <p>AppTalentNavi v2.0 &mdash; AIエージェント体験ツール</p>
-  <p style="margin-top:6px;">
+  <p style="font-size:0.95rem; font-weight:700; color:#e2e8f0;">AppTalentNavi v2.0 &mdash; AIエージェント体験ツール</p>
+  <p style="margin-top:10px;">
     <a href="https://github.com/tsubasagit/AppTalentNavi">GitHub</a> &nbsp;|&nbsp;
     <a href="https://github.com/tsubasagit/AppTalentNavi/releases">Releases</a> &nbsp;|&nbsp;
-    MIT License
+    <a href="https://github.com/tsubasagit/AppTalentNavi/blob/master/LICENSE">MIT License</a> &nbsp;|&nbsp;
+    <a href="https://share-na2.hsforms.com/2T1pQ6j2sQzajdd3AIDeWqgcy93d?utm_source=appnavi-v2" target="_blank">お問い合わせ</a>
   </p>
-  <p style="margin-top:10px; font-size:0.78rem;">
-    Powered by <a href="https://github.com/ochyai/co-vibe">co-vibe</a> &mdash; &copy; 2026 AppTalentHub
+  <p style="margin-top:12px; font-size:0.78rem;">
+    開発・運営: 株式会社AppTalentHub &nbsp;|&nbsp;
+    Powered by <a href="https://github.com/ochyai/co-vibe">co-vibe</a>
+  </p>
+  <p style="margin-top:4px; font-size:0.75rem; color:#64748b;">
+    &copy; 2026 株式会社AppTalentHub. All rights reserved.
   </p>
 </footer>
 
