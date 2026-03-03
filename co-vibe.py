@@ -1551,6 +1551,7 @@ class MultiProviderClient:
         ("ollama",    "deepseek-coder-v2:16b",       "balanced", 32768),
         ("ollama",    "qwen3:32b",                   "balanced", 32768),
         ("ollama",    "qwen2.5-coder:7b",            "fast",     32768),
+        ("ollama",    "qwen2.5-coder:3b",            "fast",     32768),
         ("ollama",    "codellama:34b",               "fast",     16384),
     ]
 
@@ -1623,6 +1624,12 @@ class MultiProviderClient:
                 if self._ollama_installed and m[1] not in self._ollama_installed:
                     continue
             self._available_models.append(m)
+
+        # HAJIME_MODE: prioritize Ollama (local) to avoid cloud API timeouts
+        if _HAJIME_MODE and "ollama" in self._api_keys:
+            ollama_models = [m for m in self._available_models if m[0] == "ollama"]
+            cloud_models = [m for m in self._available_models if m[0] != "ollama"]
+            self._available_models = ollama_models + cloud_models
 
         # Provider health tracking: {provider: {"failures": int, "last_fail": float, "reason": str}}
         self._provider_health = {}

@@ -510,7 +510,7 @@ def main():
     os.environ["HAJIME_MODE"] = "1"
     os.environ["HAJIME_VERSION"] = APP_VERSION
     os.environ["HAJIME_APP_NAME"] = APP_NAME
-    os.environ["CO_VIBE_STRATEGY"] = "auto"
+    os.environ["CO_VIBE_STRATEGY"] = "fast"
 
     if use_gemini:
         os.environ["CO_VIBE_MODEL"] = os.environ.get("CO_VIBE_MODEL", GEMINI_DEFAULT_MODEL)
