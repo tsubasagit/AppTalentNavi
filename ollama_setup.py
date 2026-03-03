@@ -81,7 +81,8 @@ def is_ollama_installed():
     try:
         result = subprocess.run(
             ["ollama", "--version"],
-            capture_output=True, text=True, timeout=10
+            capture_output=True, text=True, timeout=10,
+            encoding="utf-8", errors="replace"
         )
         if result.returncode == 0:
             return "ollama"
@@ -148,7 +149,8 @@ def install_ollama(installer_path):
         # /VERYSILENT: 完全サイレント（Inno Setupベース）、/NORESTART: 再起動しない
         result = subprocess.run(
             [installer_path, "/VERYSILENT", "/NORESTART"],
-            capture_output=True, text=True, timeout=300  # 5分タイムアウト
+            capture_output=True, text=True, timeout=300,  # 5分タイムアウト
+            encoding="utf-8", errors="replace"
         )
         if result.returncode == 0:
             _print_status("インストールが完了しました！")

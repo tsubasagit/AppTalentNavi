@@ -170,7 +170,7 @@ def show_complete(use_gemini=False):
     else:
         print(f"  AIプロバイダー: Ollama ({RECOMMENDED_MODEL})")
     print()
-    print("  起動方法：")
+    print("  起動方法（PowerShell を開いてから実行することを推奨）：")
     print(f"    python hajime.py")
     print()
     print("  自動承認モードで起動（確認不要）：")

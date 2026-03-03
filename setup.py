@@ -296,7 +296,8 @@ def get_system_info():
             import subprocess
             result = subprocess.run(
                 ["sysctl", "-n", "hw.memsize"],
-                capture_output=True, text=True, timeout=5
+                capture_output=True, text=True, timeout=5,
+                encoding="utf-8", errors="replace"
             )
             ram_bytes = int(result.stdout.strip())
             info["ram_gb"] = str(ram_bytes // (1024 ** 3))

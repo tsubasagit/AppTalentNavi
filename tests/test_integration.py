@@ -55,6 +55,8 @@ def _launch_co_vibe(extra_args=None, env_override=None, timeout=10):
         env=env,
         text=True,
         bufsize=1,
+        encoding="utf-8",
+        errors="replace",
     )
     return proc
 

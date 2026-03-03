@@ -162,6 +162,48 @@ def build():
         "--version-file", version_file,
     ] + icon_arg + add_data + [
         "--hidden-import=ollama_setup",
+        # co-vibe.py は exec() で読み込むため、PyInstaller が自動検出できない
+        "--hidden-import=html",
+        "--hidden-import=html.parser",
+        "--hidden-import=json",
+        "--hidden-import=re",
+        "--hidden-import=uuid",
+        "--hidden-import=argparse",
+        "--hidden-import=subprocess",
+        "--hidden-import=fnmatch",
+        "--hidden-import=platform",
+        "--hidden-import=shutil",
+        "--hidden-import=tempfile",
+        "--hidden-import=threading",
+        "--hidden-import=unicodedata",
+        "--hidden-import=urllib.request",
+        "--hidden-import=urllib.error",
+        "--hidden-import=urllib.parse",
+        "--hidden-import=hashlib",
+        "--hidden-import=traceback",
+        "--hidden-import=base64",
+        "--hidden-import=atexit",
+        "--hidden-import=abc",
+        "--hidden-import=datetime",
+        "--hidden-import=collections",
+        "--hidden-import=concurrent.futures",
+        "--hidden-import=ssl",
+        "--hidden-import=readline",
+        "--hidden-import=ctypes",
+        "--hidden-import=select",
+        "--hidden-import=difflib",
+        "--hidden-import=heapq",
+        "--hidden-import=socket",
+        "--hidden-import=ipaddress",
+        "--hidden-import=locale",
+        "--hidden-import=sqlite3",
+        "--hidden-import=ast",
+        "--hidden-import=shlex",
+        "--hidden-import=zlib",
+        "--hidden-import=webbrowser",
+        "--hidden-import=random",
+        "--hidden-import=itertools",
+        "--hidden-import=pathlib",
         "--noconfirm",
         os.path.join(SCRIPT_DIR, "hajime.py"),
     ]
@@ -180,6 +222,11 @@ def build():
         if result.returncode == 0:
             exe_path = os.path.join(SCRIPT_DIR, "dist", f"{APP_NAME}.exe")
             if os.path.exists(exe_path):
+                # appnavi.cmd を dist にコピー（PATH 登録後は appnavi で起動可能）
+                cmd_src = os.path.join(SCRIPT_DIR, "appnavi.cmd")
+                if os.path.exists(cmd_src):
+                    import shutil
+                    shutil.copy2(cmd_src, os.path.join(SCRIPT_DIR, "dist", "appnavi.cmd"))
                 size_mb = os.path.getsize(exe_path) / (1024 * 1024)
                 print()
                 print("  ╔══════════════════════════════════════╗")
@@ -187,6 +234,7 @@ def build():
                 print("  ╚══════════════════════════════════════╝")
                 print()
                 print(f"  出力: dist/{APP_NAME}.exe ({size_mb:.1f} MB)")
+                print("  どこからでも起動: .\\install-path.ps1 実行後、新しい PowerShell で appnavi")
                 print()
                 return True
             else:

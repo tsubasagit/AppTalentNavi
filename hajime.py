@@ -12,6 +12,7 @@ Usage:
 import signal
 import sys
 import os
+import traceback
 import urllib.request
 import json
 
@@ -42,7 +43,7 @@ if sys.platform == 'win32':
 
 APP_VERSION = "2.0.0"
 APP_NAME = "AppTalentNavi"
-RECOMMENDED_OLLAMA_MODEL = "qwen2.5-coder:7b"
+RECOMMENDED_OLLAMA_MODEL = "qwen2.5-coder:3b"
 GEMINI_DEFAULT_MODEL = "gemini-2.5-flash-lite"
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
@@ -67,6 +68,45 @@ def _get_user_data_dir():
 
 _BASE_PATH = _get_base_path()
 _USER_DATA_DIR = _get_user_data_dir()
+
+
+def _crash_excepthook(exc_type, exc_value, exc_tb):
+    """exe 実行時に未捕捉例外でターミナルが即閉じないよう、ログ出力して Enter 待ちにする"""
+    lines = traceback.format_exception(exc_type, exc_value, exc_tb)
+    msg = "".join(lines)
+    is_frozen = getattr(sys, "frozen", False)
+    log_path = None
+    if is_frozen:
+        try:
+            os.makedirs(_USER_DATA_DIR, exist_ok=True)
+            log_path = os.path.join(_USER_DATA_DIR, "crash.log")
+            with open(log_path, "w", encoding="utf-8") as f:
+                f.write(msg)
+        except Exception:
+            pass
+    try:
+        sys.__stderr__.write(msg)
+        sys.__stderr__.flush()
+    except Exception:
+        pass
+    if is_frozen and sys.__stderr__.isatty():
+        try:
+            sys.__stderr__.write("\n  エラーが発生しました。上記を確認してください。\n")
+            if log_path:
+                sys.__stderr__.write(f"  ログファイル: {log_path}\n")
+            sys.__stderr__.write("  閉じるには Enter キーを押してください。\n")
+            input()
+        except Exception:
+            pass
+    else:
+        if log_path:
+            sys.__stderr__.write(f"\n  Error logged to: {log_path}\n")
+
+
+def _install_crash_handler():
+    """exe 時のみクラッシュ用 excepthook を設定"""
+    if getattr(sys, "frozen", False):
+        sys.excepthook = _crash_excepthook
 
 
 # Load .env file if present (for GEMINI_API_KEY etc.)
@@ -124,6 +164,8 @@ def print_header():
     print()
     print("  AIエージェントが自動でタスクを実行します。")
     print("  あなたは指示を入力するだけ。あとはAIにお任せ！")
+    if sys.platform == "win32":
+        print("  ※ 推奨: PowerShell を開き、このフォルダで起動すると安定します。")
     print()
 
 
@@ -191,88 +233,23 @@ def check_ollama():
         return False
 
 
-def show_guide_menu():
-    """対話式ガイドメニューを表示し、選択に応じて環境変数に初期プロンプトを設定する。
-    シナリオ実行後も対話を継続できるよう、-p（ワンショット）ではなく
-    HAJIME_INITIAL_PROMPT 環境変数を使用する。
-    """
-    print("  ━━ 体験メニュー ━━━━━━━━━━━━━━━━━━━")
+def show_sample_prompts():
+    """サンプルプロンプトを表示する。ユーザーは自由入力で指示を行う。"""
+    print("  ━━ こんなことを頼めます ━━━━━━━━━━━━━━━")
     print()
-    print("  ★1. データ抽出【おすすめ・初めての方はコチラ】")
-    print("     20件の会議メモから情報を自動で整理 (約5分)")
+    print("  たとえば、こんな指示を入力してみましょう：")
     print()
-    print("   2. Webページ作成")
-    print("     指定テーマでHTMLページを自動生成 (約3分)")
+    print('    「Helloというテキストファイルを作って」')
     print()
-    print("   3. ファイル整理")
-    print("     散らばったファイルを自動で分類 (約3分)")
+    print('    「コーヒーショップのLPページを作って」')
     print()
-    print("   4. 自由入力")
-    print("     好きな指示を入力して自由に体験")
+    print('    「data/meetings にあるファイルを整理して」')
     print()
-
-    while True:
-        try:
-            choice = input("  番号を入力 [1-4] (Enter で 1): ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            sys.exit(0)
-
-        if choice == "" or choice == "1":
-            prompt = "data/meetings/ にある会議メモを読んで、顧客名・クレーム内容・担当者名・日付をCSVファイルに抽出してください"
-            os.environ["HAJIME_INITIAL_PROMPT"] = prompt
-            sys.argv.append("-y")
-            print()
-            print("  → データ抽出シナリオを開始します...")
-            print()
-            return
-
-        elif choice == "2":
-            print()
-            try:
-                theme = input("  どんなページを作りますか？（例: 自己紹介、カフェメニュー）: ").strip()
-            except (EOFError, KeyboardInterrupt):
-                print()
-                sys.exit(0)
-            if not theme:
-                print("  テーマが入力されませんでした。もう一度選択してください。")
-                print()
-                continue
-            prompt = f"「{theme}」のHTMLページを作成してください。CSS・JSをインラインで含む、レスポンシブな1ファイル完結のWebページにしてください。output/ フォルダに保存してください"
-            os.environ["HAJIME_INITIAL_PROMPT"] = prompt
-            sys.argv.append("-y")
-            print()
-            print(f"  → 「{theme}」のWebページを作成します...")
-            print()
-            return
-
-        elif choice == "3":
-            print()
-            try:
-                folder = input("  整理するフォルダパス (Enter でカレントディレクトリ): ").strip()
-            except (EOFError, KeyboardInterrupt):
-                print()
-                sys.exit(0)
-            if not folder:
-                folder = "."
-            prompt = f"「{folder}」フォルダ内のファイル一覧を確認し、種類ごとにサブフォルダに分類・リネームしてください"
-            os.environ["HAJIME_INITIAL_PROMPT"] = prompt
-            sys.argv.append("-y")
-            print()
-            print(f"  → フォルダ「{folder}」のファイル整理を開始します...")
-            print()
-            return
-
-        elif choice == "4":
-            sys.argv.append("-y")
-            print()
-            print("  → 自由入力モードで起動します。プロンプトに指示を入力してください。")
-            print()
-            return
-
-        else:
-            print("  1〜4の番号を入力してください。")
-            print()
+    print("  ※ 日本語でそのまま入力できます。何でも頼んでみましょう！")
+    print()
+    print("  ヒント: 最初は「Helloというテキストファイルを作って」がおすすめです。")
+    print("          AIが「許可していいですか？」と聞いてきたら、y を押してEnterしてください。")
+    print()
 
 
 def _setup_workdir():
@@ -292,10 +269,9 @@ def _setup_workdir():
         desktop = os.path.join(home, "Desktop")
         documents = os.path.join(home, "Documents")
 
-    print("  ━━ 作業フォルダの設定 ━━━━━━━━━━━━━━━━")
+    print("  ━━ どこにファイルをつくりますか？ ━━━━━━━━")
     print()
-    print("  AIエージェントがファイルを読み書きする")
-    print("  メインの作業フォルダを選んでください。")
+    print("  AIが作るファイルの保存先を選んでください。")
     print()
     print(f"   1. ダウンロード   {downloads}")
     print(f"   2. デスクトップ   {desktop}")
@@ -340,6 +316,7 @@ def _setup_workdir():
             os.chdir(workdir)
             print()
             print(f"  → 作業フォルダ: {workdir}")
+            print("  ※ このフォルダの中にAIがファイルを作成します。安心してください、他の場所には影響しません。")
             print()
             return
         else:
@@ -389,10 +366,99 @@ def _exec_co_vibe_early():
     exec(compile(code, co_vibe_path, "exec"), globals())
 
 
+def _is_exe_first_run():
+    """exe直接起動かつ初回（インストール先が存在しない）か判定する。"""
+    if not getattr(sys, "frozen", False):
+        return False
+    install_dir = os.path.join(
+        os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+        APP_NAME,
+    )
+    return not os.path.isfile(os.path.join(install_dir, "AppTalentNavi.exe"))
+
+
+def _install_to_path():
+    """install-path.ps1 相当の処理: exeコピー・appnavi.cmdを作成・PATHに登録する。"""
+    import shutil
+
+    install_dir = os.path.join(
+        os.environ.get("LOCALAPPDATA", os.path.expanduser("~")),
+        APP_NAME,
+    )
+    os.makedirs(install_dir, exist_ok=True)
+
+    # exe をインストール先にコピー
+    src_exe = sys.executable
+    dst_exe = os.path.join(install_dir, "AppTalentNavi.exe")
+    try:
+        shutil.copy2(src_exe, dst_exe)
+    except Exception as e:
+        print(f"  警告: exeのコピーに失敗しました: {e}")
+
+    # appnavi.cmd を作成
+    cmd_path = os.path.join(install_dir, "appnavi.cmd")
+    try:
+        with open(cmd_path, "w", encoding="ascii") as f:
+            f.write('@echo off\n"%~dp0AppTalentNavi.exe" %*\n')
+    except Exception as e:
+        print(f"  警告: appnavi.cmdの作成に失敗しました: {e}")
+
+    # ユーザーPATHに追加
+    try:
+        import winreg
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Environment",
+            0,
+            winreg.KEY_READ | winreg.KEY_WRITE,
+        ) as key:
+            try:
+                user_path, _ = winreg.QueryValueEx(key, "Path")
+            except FileNotFoundError:
+                user_path = ""
+            if install_dir.lower() not in user_path.lower():
+                new_path = f"{user_path};{install_dir}" if user_path else install_dir
+                winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, new_path)
+    except Exception as e:
+        print(f"  警告: PATH登録に失敗しました: {e}")
+
+
+def _show_exe_first_run_message():
+    """exe初回起動時のPowerShell誘導メッセージを表示して待機する。"""
+    print()
+    print("  ╔══════════════════════════════════════════════╗")
+    print("  ║  セットアップ完了！                          ║")
+    print("  ╚══════════════════════════════════════════════╝")
+    print()
+    print("  次のステップ:")
+    print()
+    print('  1. PowerShellを開きましょう！')
+    print('     (スタートメニューで「PowerShell」と入力)')
+    print()
+    print("  2. 以下のコマンドを入力してください:")
+    print()
+    print("     appnavi")
+    print()
+    try:
+        input("  Enterキーで終了...")
+    except (EOFError, KeyboardInterrupt):
+        pass
+    sys.exit(0)
+
+
 def main():
+    _install_crash_handler()  # exe 時: 未捕捉例外でターミナルが即閉じないようにする
     # CLI専用オプション（--help / --version / --list-sessions）の場合は対話・APIチェックをスキップ
     if _is_cli_only_request():
         _exec_co_vibe_early()
+        return
+
+    # exe初回起動: インストール + PowerShell誘導
+    if _is_exe_first_run():
+        print_header()
+        print("  環境をセットアップ中...")
+        _install_to_path()
+        _show_exe_first_run_message()
         return
 
     print_header()
@@ -416,26 +482,29 @@ def main():
             print("  Codespaces Secrets に GEMINI_API_KEY を設定してください。")
             sys.exit(1)
     else:
-        # ローカル環境: 従来のGemini→Ollamaフォールバックロジック
-        # 1. Gemini APIキーがあれば優先的に使用
+        # ローカル環境: Ollama優先 → Geminiキーがあれば追加確認
+        # 1. まずOllamaをチェック（ローカルなので高速）
+        ollama_ok = check_ollama()
+
+        # 2. Gemini APIキーがあれば接続確認し、使えればGeminiを優先
         if os.environ.get("GEMINI_API_KEY"):
             if check_gemini():
                 use_gemini = True
             else:
-                print("  Gemini APIが利用できません。Ollamaにフォールバックします。")
-                print()
+                if ollama_ok:
+                    print("  Gemini APIが利用できません。Ollamaを使用します。")
+                    print()
 
-        # 2. Geminiが使えなければOllamaをチェック
-        if not use_gemini:
-            if not check_ollama():
-                print()
-                print("  AIプロバイダーが見つかりません。")
-                print("  以下のいずれかを設定してください：")
-                print("    1. GEMINI_API_KEY 環境変数を設定（推奨）")
-                print("    2. Ollamaをインストールして起動")
-                print()
-                print("  セットアップ: python setup-hajime.py")
-                sys.exit(1)
+        # 3. どちらも使えない場合はエラー
+        if not use_gemini and not ollama_ok:
+            print()
+            print("  AIプロバイダーが見つかりません。")
+            print("  以下のいずれかを設定してください：")
+            print("    1. Ollamaをインストールして起動（推奨・高速）")
+            print("    2. GEMINI_API_KEY 環境変数を設定")
+            print()
+            print("  セットアップ: python setup-hajime.py")
+            sys.exit(1)
 
     # === 環境変数で AppTalentNavi モードを設定 ===
     os.environ["HAJIME_MODE"] = "1"
@@ -453,9 +522,9 @@ def main():
     if not _should_skip_guide():
         _setup_workdir()
 
-    # === ガイドメニュー ===
+    # === サンプルプロンプト表示 ===
     if not _should_skip_guide():
-        show_guide_menu()
+        show_sample_prompts()
 
     # exe時はユーザーデータディレクトリ情報を環境変数に設定
     if getattr(sys, 'frozen', False):

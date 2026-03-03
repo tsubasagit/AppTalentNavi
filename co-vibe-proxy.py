@@ -38,7 +38,7 @@ def load_dotenv(path=None):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
     if not os.path.exists(path):
         return
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -78,7 +78,7 @@ def _session_log(tag, data, req_id=0):
     prefix = f"{req_id:04d}_{ts}" if req_id else ts
     path = os.path.join(SESSION_DIR, f"{prefix}_{tag}.json")
     try:
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             if isinstance(data, (dict, list)):
                 json.dump(data, f, ensure_ascii=False, indent=2)
             else:

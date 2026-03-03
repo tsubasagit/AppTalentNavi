@@ -491,7 +491,7 @@ class ScrollRegion:
         buf += f"\033[{status_row};1H\033[2K {status}{_rst}"
 
         hint = self._hint_text or ""
-        hint_prefix = f" {_dim}ESC: stop"
+        hint_prefix = f" {_dim}{'ESC: 中止' if _HAJIME_MODE else 'ESC: stop'}"
         if hint:
             buf += f"\033[{hint_row};1H\033[2K{hint_prefix} | type-ahead: \"{hint}\"{_rst}"
         else:
@@ -2285,6 +2285,9 @@ class MultiProviderClient:
             "temperature": self.temperature,
             "stream": stream,
         }
+        # HAJIME_MODE: disable Gemini 2.5 thinking (extended reasoning) for speed
+        if _HAJIME_MODE and "gemini-2.5" in model_id:
+            payload["thinking"] = {"thinking_budget": 0}
         if tools:
             payload["tools"] = tools
             # Ollama does not support tool_choice parameter
@@ -5375,7 +5378,7 @@ class GitCheckpoint:
         try:
             result = subprocess.run(
                 ["git"] + args,
-                cwd=self.cwd, capture_output=True, text=True, timeout=timeout
+                cwd=self.cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout
             )
             return result.returncode == 0, result.stdout.strip()
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -5462,7 +5465,7 @@ class AutoTestRunner:
             try:
                 result = subprocess.run(
                     self.lint_cmd.split() + [file_path],
-                    cwd=self.cwd, capture_output=True, text=True, timeout=30
+                    cwd=self.cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30
                 )
                 if result.returncode != 0:
                     results.append(f"Lint error:\n{result.stderr or result.stdout}")
@@ -5473,7 +5476,7 @@ class AutoTestRunner:
             try:
                 result = subprocess.run(
                     ["python3", "-m", "py_compile", file_path],
-                    cwd=self.cwd, capture_output=True, text=True, timeout=15
+                    cwd=self.cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15
                 )
                 if result.returncode != 0:
                     results.append(f"Syntax error:\n{result.stderr}")
@@ -5485,7 +5488,7 @@ class AutoTestRunner:
             try:
                 result = subprocess.run(
                     self.test_cmd.split(),
-                    cwd=self.cwd, capture_output=True, text=True, timeout=120
+                    cwd=self.cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120
                 )
                 if result.returncode != 0:
                     output = (result.stdout + "\n" + result.stderr).strip()
@@ -6545,7 +6548,7 @@ class ScreenshotTool(Tool):
                     try:
                         result = subprocess.run(
                             ["osascript", "-e", script],
-                            capture_output=True, text=True, timeout=5
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5
                         )
                         if result.returncode == 0 and result.stdout.strip():
                             cmd.append(result.stdout.strip())
@@ -6563,7 +6566,7 @@ class ScreenshotTool(Tool):
                     try:
                         wid_result = subprocess.run(
                             ["xdotool", "search", "--name", window],
-                            capture_output=True, text=True, timeout=5
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5
                         )
                         if wid_result.returncode != 0 or not wid_result.stdout.strip():
                             return f"Error: could not find window matching '{window}'"
@@ -6601,7 +6604,7 @@ class ScreenshotTool(Tool):
             else:
                 return f"Error: unsupported platform '{system}'"
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
             if result.returncode != 0:
                 stderr = result.stderr.strip()
                 return f"Error: screenshot command failed (exit {result.returncode}): {stderr}"
@@ -6702,7 +6705,7 @@ class ProcessManagerTool(Tool):
             if system == "Windows":
                 result = subprocess.run(
                     ["tasklist", "/FO", "CSV", "/NH"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                 )
                 if result.returncode != 0:
                     return f"Error: tasklist failed: {result.stderr.strip()}"
@@ -6725,7 +6728,7 @@ class ProcessManagerTool(Tool):
             else:
                 result = subprocess.run(
                     ["ps", "aux"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                 )
                 if result.returncode != 0:
                     return f"Error: ps aux failed: {result.stderr.strip()}"
@@ -6854,7 +6857,7 @@ class ProcessManagerTool(Tool):
             if system in ("Darwin", "Linux"):
                 result = subprocess.run(
                     ["lsof", "-i", f":{port}", "-P", "-n"],
-                    capture_output=True, text=True, timeout=5
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5
                 )
                 if result.returncode == 0 and result.stdout.strip():
                     lines = result.stdout.strip().split("\n")
@@ -6865,7 +6868,7 @@ class ProcessManagerTool(Tool):
             elif system == "Windows":
                 result = subprocess.run(
                     ["netstat", "-ano", "-p", "TCP"],
-                    capture_output=True, text=True, timeout=5
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5
                 )
                 if result.returncode == 0:
                     for line in result.stdout.split("\n"):
@@ -6884,7 +6887,7 @@ class ProcessManagerTool(Tool):
             if system in ("Darwin", "Linux"):
                 result = subprocess.run(
                     ["lsof", "-i", "-P", "-n"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                 )
                 if result.returncode != 0:
                     return f"Error: lsof failed: {result.stderr.strip()}"
@@ -6920,7 +6923,7 @@ class ProcessManagerTool(Tool):
             elif system == "Windows":
                 result = subprocess.run(
                     ["netstat", "-ano", "-p", "TCP"],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                 )
                 if result.returncode != 0:
                     return f"Error: netstat failed: {result.stderr.strip()}"
@@ -7481,6 +7484,32 @@ def _extract_tool_calls_from_text(text, known_tools=None):
     # (Issue #5: verified — both code-block and inline-code stripping are working)
     stripped = re.sub(r'`[^`]+`', '', stripped)
     search_text = stripped
+
+    # Pattern 0: Plain JSON tool calls (common with Ollama/local LLMs)
+    # e.g., {"name": "Write", "arguments": {"file_path": "...", "content": "..."}}
+    if known_tools:
+        _json_start = search_text.find('{')
+        if _json_start != -1 and '"name"' in search_text:
+            _json_end = search_text.rfind('}')
+            if _json_end > _json_start:
+                try:
+                    obj = json.loads(search_text[_json_start:_json_end + 1])
+                    if isinstance(obj, dict) and obj.get("name") in known_tools:
+                        _args = obj.get("arguments", {})
+                        tool_calls.append({
+                            "id": f"call_{uuid.uuid4().hex}",
+                            "type": "function",
+                            "function": {
+                                "name": obj["name"],
+                                "arguments": json.dumps(_args, ensure_ascii=False) if isinstance(_args, dict) else str(_args),
+                            },
+                        })
+                        _before = search_text[:_json_start].strip()
+                        _after = search_text[_json_end + 1:].strip()
+                        remaining_text = f"{_before} {_after}".strip() if _before or _after else ""
+                        return tool_calls, remaining_text
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    pass
 
     # Issue #4 (ReDoS protection): Quick bail-out — if no XML-like closing tags
     # at all, skip the expensive regex patterns entirely.
@@ -8324,7 +8353,7 @@ class TUI:
             _first_run_marker = os.path.join(_state_dir, ".navi_v2_first_run") if _state_dir else ""
             if _first_run_marker and not os.path.exists(_first_run_marker):
                 print(f"  {_g}はじめまして！{C.RESET}")
-                print(f"  {_d}「会議メモからデータを抽出して」と入力してみましょう！{C.RESET}")
+                print(f"  {_d}「Helloというテキストファイルを作って」と入力してみましょう！{C.RESET}")
                 try:
                     os.makedirs(os.path.dirname(_first_run_marker), exist_ok=True)
                     open(_first_run_marker, "w").close()
@@ -8332,7 +8361,7 @@ class TUI:
                     pass
             else:
                 print(f"  {_g}AIエージェントにタスクを依頼してみましょう！{C.RESET}")
-            print(f"  {_d}/scenario で体験シナリオ一覧 • /help でコマンド一覧{C.RESET}")
+            print(f"  {_d}/examples でプロンプト例を表示 • /help でコマンド一覧{C.RESET}")
         if _provider_name == "Ollama":
             print(f"  {_y}⚠ Ollama（ローカルLLM）はインターネットに接続していません。{C.RESET}")
             print(f"  {_d}  • 日付が古い → 学習データのカットオフ時点の情報のみ{C.RESET}")
@@ -8340,7 +8369,7 @@ class TUI:
             print(f"  {_d}  • 事実が不正確なこともある → 小さいモデルほど精度が低下{C.RESET}")
             print()
         if not config.yes_mode:
-            print(f"  {_y}💡 -y オプションで自動承認モード（確認不要）{C.RESET}")
+            print(f"  {_y}💡 毎回の許可確認をスキップしたい場合は、起動時に appnavi -y と入力してください{C.RESET}")
         print()
 
     def _detect_cjk_locale(self):
@@ -8431,7 +8460,10 @@ class TUI:
             if first_line.strip() == '"""':
                 # Explicit multi-line mode
                 lines = []
-                print(f"{C.DIM}  (multi-line input, end with \"\"\" on its own line){C.RESET}")
+                if _HAJIME_MODE:
+                    print(f"{C.DIM}  (複数行入力モード。終了するには \"\"\" だけの行を入力){C.RESET}")
+                else:
+                    print(f"{C.DIM}  (multi-line input, end with \"\"\" on its own line){C.RESET}")
                 while True:
                     try:
                         line = input(f"{C.DIM}...{C.RESET} ")
@@ -8439,7 +8471,8 @@ class TUI:
                             break
                         lines.append(line)
                     except (EOFError, KeyboardInterrupt):
-                        print(f"\n{C.DIM}(Cancelled){C.RESET}")
+                        _cancel_msg = "(キャンセルしました)" if _HAJIME_MODE else "(Cancelled)"
+                        print(f"\n{C.DIM}{_cancel_msg}{C.RESET}")
                         return None
                 return "\n".join(lines)
 
@@ -8452,7 +8485,10 @@ class TUI:
                 # Show subtle hint on first use
                 if not hasattr(self, '_ime_hint_shown'):
                     self._ime_hint_shown = True
-                    print(f"{C.DIM}  (IME mode: press Enter on empty line to send, \"\"\" for multiline){C.RESET}")
+                    if _HAJIME_MODE:
+                        print(f"{C.DIM}  (入力が終わったら空のままEnterで送信します){C.RESET}")
+                    else:
+                        print(f"{C.DIM}  (IME mode: press Enter on empty line to send, \"\"\" for multiline){C.RESET}")
                 lines = [first_line]
                 while True:
                     try:
@@ -8462,7 +8498,8 @@ class TUI:
                             break
                         lines.append(cont)
                     except (EOFError, KeyboardInterrupt):
-                        print(f"\n{C.DIM}(Cancelled){C.RESET}")
+                        _cancel_msg = "(キャンセルしました)" if _HAJIME_MODE else "(Cancelled)"
+                        print(f"\n{C.DIM}{_cancel_msg}{C.RESET}")
                         return None
                 return "\n".join(lines)
 
@@ -8528,7 +8565,7 @@ class TUI:
                 return
             _elapsed = _now - _stream_start
             _tok_display = f"{_approx_tokens / 1000:.1f}k" if _approx_tokens >= 1000 else str(_approx_tokens)
-            _esc_note = " \u2014 ESC: stop" if HAS_TERMIOS else ""
+            _esc_note = (" \u2014 ESC: 中止" if _HAJIME_MODE else " \u2014 ESC: stop") if HAS_TERMIOS else ""
             if _HAJIME_MODE:
                 _status_msg = f"\U0001f4ad 考え中... ({_elapsed:.0f}s)"
             else:
@@ -9084,12 +9121,23 @@ class TUI:
                 remaining = line_count - max_detail
                 _p(f"{detail_marker} {_ansi(chr(27)+'[38;5;245m')}  \u2195 {remaining} more lines{C.RESET}")
 
+    _permission_first_time = True  # D3: 初回許可説明用フラグ
+
     def ask_permission(self, tool_name, params):
         """Ask user for permission — Claude Code style prompt."""
         icon, color = self._tool_icons().get(tool_name, ("🔧", C.YELLOW))
 
         # Stop any running spinner/timer before prompting (prevents \r collision)
         self.stop_spinner()
+
+        # D3: 初回の許可プロンプト前に説明（HAJIME_MODE のみ）
+        if _HAJIME_MODE and TUI._permission_first_time:
+            TUI._permission_first_time = False
+            _b = _ansi("\033[38;5;39m")
+            print(f"\n  {_b}┌─ はじめての許可確認 ──────────────────{C.RESET}")
+            print(f"  {_b}│{C.RESET} AIがファイルを操作する前に、あなたの許可を求めます。")
+            print(f"  {_b}│{C.RESET} 安全のための仕組みです。y を押してEnterで許可できます。")
+            print(f"  {_b}└───────────────────────────────────────{C.RESET}")
 
         # Show full command/detail (no truncation for security review)
         detail = ""
@@ -9107,8 +9155,15 @@ class TUI:
         _y = _ansi("\033[38;5;226m")
         _w = _ansi("\033[38;5;255m")
         box_w = min(46, _get_terminal_width() - 6)
-        print(f"\n  {_y}╭─ Permission Required {'─' * max(0, box_w - 23)}{C.RESET}")
-        print(f"  {_y}│{C.RESET} {color}{icon} {tool_name}{C.RESET}")
+
+        if _HAJIME_MODE:
+            # HAJIME_MODE: 日本語の許可プロンプト
+            _jp_desc = self._HAJIME_TOOL_LABELS.get(tool_name, tool_name)
+            print(f"\n  {_y}╭─ 実行の許可 {'─' * max(0, box_w - 14)}{C.RESET}")
+            print(f"  {_y}│{C.RESET} {color}{icon} {tool_name} — {_jp_desc}{C.RESET}")
+        else:
+            print(f"\n  {_y}╭─ Permission Required {'─' * max(0, box_w - 23)}{C.RESET}")
+            print(f"  {_y}│{C.RESET} {color}{icon} {tool_name}{C.RESET}")
         if detail:
             # Show full detail, wrapping if needed
             max_w = max(30, box_w - 4)
@@ -9119,11 +9174,16 @@ class TUI:
                     chunk = detail[i:i+max_w]
                     print(f"  {_y}│{C.RESET} {_w}{chunk}{C.RESET}")
         print(f"  {_y}│{C.RESET}")
-        print(f"  {_y}│{C.RESET}  [y] Allow once   [a] Allow all {tool_name} this session")
-        print(f"  {_y}│{C.RESET}  [n] Deny (Enter)  [d] Deny all   [Y] Approve everything")
+        if _HAJIME_MODE:
+            print(f"  {_y}│{C.RESET}  [y] 許可する   [a] このツールを常に許可")
+            print(f"  {_y}│{C.RESET}  [n] 拒否 (Enter)  [Y] すべて許可")
+        else:
+            print(f"  {_y}│{C.RESET}  [y] Allow once   [a] Allow all {tool_name} this session")
+            print(f"  {_y}│{C.RESET}  [n] Deny (Enter)  [d] Deny all   [Y] Approve everything")
         print(f"  {_y}╰{'─' * box_w}{C.RESET}")
         try:
-            reply = input(f"  {_y}? {C.RESET}").strip()
+            _prompt_text = f"  {_y}? (y/n): {C.RESET}" if _HAJIME_MODE else f"  {_y}? {C.RESET}"
+            reply = input(_prompt_text).strip()
         except (EOFError, KeyboardInterrupt):
             print()
             return False
@@ -9175,9 +9235,9 @@ class TUI:
                 if show_elapsed:
                     elapsed = time.time() - _t0
                     if elapsed > 20:
-                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 {'AIが深く考えています' if _HAJIME_MODE else 'deep reasoning in progress'}{C.RESET}"
+                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 {'AIが作業を準備しています、もう少しお待ちください' if _HAJIME_MODE else 'deep reasoning in progress'}{C.RESET}"
                     elif elapsed > 10:
-                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 {'モデルが処理中です' if _HAJIME_MODE else 'model is processing'}{C.RESET}"
+                        suffix = f" ({int(elapsed)}s) {C.DIM}\u2014 {'AIが考えています...' if _HAJIME_MODE else 'model is processing'}{C.RESET}"
                     elif elapsed > 3:
                         suffix = f" ({int(elapsed)}s)"
                 _lock = _sr._lock if _sr._active else _print_lock
@@ -9314,7 +9374,7 @@ class TUI:
         print(f"""
   {_c}{C.BOLD}━━ AppTalentNavi コマンド一覧 ━━━━━━━━{C.RESET}
 
-  {_h}/scenario{C.RESET}        体験シナリオ一覧を表示
+  {_h}/examples{C.RESET}        プロンプト例を表示
   {_h}/help{C.RESET}            このヘルプを表示
   {_h}/clear{C.RESET}           会話をリセット
   {_h}/exit{C.RESET}            終了
@@ -10019,7 +10079,7 @@ class Agent:
                 if self._plan_mode:
                     tools = [t for t in tools
                              if t.get("function", {}).get("name") in self.PLAN_MODE_TOOLS]
-                _esc_hint = " — ESC: stop" if HAS_TERMIOS else ""
+                _esc_hint = (" — ESC: 中止" if _HAJIME_MODE else " — ESC: stop") if HAS_TERMIOS else ""
                 if iteration == 0:
                     if _HAJIME_MODE:
                         self.tui.start_spinner("考え中" + _esc_hint)
@@ -10098,6 +10158,15 @@ class Agent:
                     finally:
                         if hasattr(response, 'close'):
                             response.close()
+
+                # Fallback: extract tool calls from text (local LLMs like Ollama
+                # often embed tool calls in content instead of tool_calls format)
+                if not tool_calls and text:
+                    _extracted, _cleaned = _extract_tool_calls_from_text(
+                        text, self.registry.names())
+                    if _extracted:
+                        tool_calls = _extracted
+                        text = _cleaned
 
                 # Reconcile token estimate with actual usage from API
                 # Skip reconciliation right after compaction to avoid drift
@@ -10696,7 +10765,7 @@ def main():
         print(f"  次にできること:")
         print(f"    ・「結果を表示して」    → 作成したファイルの内容を確認")
         print(f"    ・「データを分析して」  → 追加の分析を依頼")
-        print(f"    ・{_sh}/scenario{C.RESET}             → 別のシナリオを体験")
+        print(f"    ・{_sh}/examples{C.RESET}             → プロンプト例を表示")
         print(f"    ・{_sh}exit{C.RESET}                  → 終了")
         print(f"  {_sc}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.RESET}")
         print()
@@ -10754,25 +10823,22 @@ def main():
                     tui.show_help()
                     continue
                 # AppTalentNavi commands
-                elif cmd == "/scenario" and _HAJIME_MODE:
+                elif cmd in ("/examples", "/scenario") and _HAJIME_MODE:
                     _sc = _ansi("\033[38;5;39m")
                     _sh = _ansi("\033[38;5;87m")
                     _sg = _ansi("\033[38;5;46m")
                     print(f"""
-  {_sc}{C.BOLD}━━ 体験シナリオ ━━━━━━━━━━━━━━━━━━━{C.RESET}
+  {_sc}{C.BOLD}━━ こんなことを頼めます ━━━━━━━━━━━━━━━{C.RESET}
 
-  {_sg}A. データ抽出（推奨・最初にやるべき）{C.RESET}
-     data/meetings/ にある20件の議事録から
-     顧客名・クレーム内容・担当者名をCSVに整理
-     → {_sh}「会議メモからデータを抽出して」{C.RESET}
+  たとえば、こんな指示を入力してみましょう：
 
-  {_sg}B. Webページ作成{C.RESET}
-     指定テーマでHTMLページを自動生成
-     → {_sh}「自己紹介ページを作って」{C.RESET}
+    {_sh}「Helloというテキストファイルを作って」{C.RESET}
 
-  {_sg}C. ファイル整理{C.RESET}
-     散らばったファイルを分類・リネーム・整理
-     → {_sh}「ダウンロードフォルダを整理して」{C.RESET}
+    {_sh}「コーヒーショップのLPページを作って」{C.RESET}
+
+    {_sh}「data/meetings にあるファイルを整理して」{C.RESET}
+
+  {_sg}※ 日本語でそのまま入力できます。何でも頼んでみましょう！{C.RESET}
 """)
                     continue
                 elif cmd == "/clear":
@@ -10928,7 +10994,7 @@ def main():
                         # 1. Check git status
                         st = subprocess.run(
                             ["git", "status", "--porcelain"],
-                            capture_output=True, text=True, timeout=10
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                         )
                         if st.returncode != 0:
                             print(f"{C.RED}Not a git repository or git error.{C.RESET}")
@@ -10937,7 +11003,7 @@ def main():
                         # 2. Check staged files
                         staged = subprocess.run(
                             ["git", "diff", "--cached", "--stat"],
-                            capture_output=True, text=True, timeout=10
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                         )
                         has_staged = bool(staged.stdout.strip())
 
@@ -10959,7 +11025,7 @@ def main():
                                 # M8: Check for untracked files and inform user
                                 untracked = subprocess.run(
                                     ["git", "ls-files", "--others", "--exclude-standard"],
-                                    capture_output=True, text=True, timeout=10
+                                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                                 )
                                 if untracked.stdout.strip():
                                     files = untracked.stdout.strip().split("\n")
@@ -10975,7 +11041,7 @@ def main():
                         # 3. Get diff for commit message generation
                         diff_result = subprocess.run(
                             ["git", "diff", "--cached"],
-                            capture_output=True, text=True, timeout=10
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                         )
                         diff_text = diff_result.stdout.strip()
                         if not diff_text:
@@ -11050,7 +11116,7 @@ def main():
                         # 6. Commit
                         result = subprocess.run(
                             ["git", "commit", "-m", commit_msg],
-                            capture_output=True, text=True, timeout=30
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30
                         )
                         if result.returncode == 0:
                             print(f"{C.GREEN}{result.stdout.strip()}{C.RESET}")
@@ -11072,7 +11138,7 @@ def main():
                     try:
                         result = subprocess.run(
                             ["git", "diff", "--color=always"],
-                            capture_output=True, text=True, timeout=10
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                         )
                         if result.returncode != 0:
                             print(f"{C.RED}Not a git repository or git error.{C.RESET}")
@@ -11082,7 +11148,7 @@ def main():
                             # Try staged diff
                             staged = subprocess.run(
                                 ["git", "diff", "--cached", "--color=always"],
-                                capture_output=True, text=True, timeout=10
+                                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
                             )
                             if staged.stdout.strip():
                                 print(f"{C.CYAN}(staged changes){C.RESET}")
@@ -11118,7 +11184,7 @@ def main():
                             continue
                         result = subprocess.run(
                             ["git"] + args,
-                            capture_output=True, text=True, timeout=30
+                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30
                         )
                         if result.stdout:
                             print(result.stdout, end="")
@@ -11326,7 +11392,18 @@ def main():
                     continue
 
             # Run agent
-            agent.run(user_input)
+            try:
+                agent.run(user_input)
+            except Exception as run_err:
+                # コメント入力後の実行で未捕捉例外があるとターミナルごと落ちるため捕捉し、メッセージ表示してループ継続
+                err_msg = str(run_err)
+                if _HAJIME_MODE:
+                    tui._scroll_print(f"\n  {C.RED}エラーが発生しました: {err_msg}{C.RESET}")
+                else:
+                    tui._scroll_print(f"\n  {C.RED}Error: {err_msg}{C.RESET}")
+                if config.debug:
+                    traceback.print_exc()
+                continue
             # Capture type-ahead for next prompt (text typed during execution)
             _typeahead_text = agent.get_typeahead()
             if _typeahead_text:
@@ -11366,6 +11443,16 @@ def main():
             continue
         except EOFError:
             break
+        except Exception as e:
+            # 上記以外の未捕捉例外でターミナルが閉じないよう捕捉（exe/研修環境で重要）
+            err_msg = str(e)
+            if _HAJIME_MODE:
+                tui._scroll_print(f"\n  {C.RED}予期しないエラー: {err_msg}{C.RESET}")
+            else:
+                tui._scroll_print(f"\n  {C.RED}Unexpected error: {err_msg}{C.RESET}")
+            if config.debug:
+                traceback.print_exc()
+            continue
 
     # Teardown scroll region before exit
     if _scroll_mode and tui.scroll_region._active:

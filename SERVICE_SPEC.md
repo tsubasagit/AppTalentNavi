@@ -32,6 +32,8 @@
 - [ ] 体験レポート自動生成（研修成果の可視化）
 
 ## 4. 画面一覧
+- **Windows での推奨**: PowerShell を開き、プロジェクトフォルダで `python hajime.py` または `.\AppTalentNavi.exe` を実行すると安定して動作します。
+- **「appnavi」で起動**: exe ビルド後、プロジェクトフォルダで `.\install-path.ps1` を1回実行すると、新しい PowerShell からどこでも `appnavi` と打つだけで起動できます（cd 不要）。
 | 画面 | 起動方法 | 概要 |
 |---|---|---|
 | CLI対話 | `python hajime.py` | メインの対話画面。AIエージェントにタスクを依頼 |

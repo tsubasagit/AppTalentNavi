@@ -470,9 +470,9 @@ section { padding: 80px 20px; }
 
 .steps-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
@@ -866,40 +866,58 @@ footer a:hover { text-decoration: underline; }
     </div>
 
     <div class="section-header">
-      <h2>3つの体験シナリオ</h2>
-      <p>起動したらメニューで番号を選ぶだけ。すぐに体験スタート！</p>
+      <h2>こんなことを頼めます</h2>
+      <p>日本語でそのまま入力するだけ。何でも頼んでみましょう！</p>
     </div>
 
     <div class="what-grid">
       <div class="what-card reveal">
-        <span class="emoji">&#128202;</span>
-        <h3>A. データ抽出</h3>
-        <p>バラバラの会議メモ20件を、AIが自動で読み取ってCSVに整理</p>
+        <span class="emoji">&#128196;</span>
+        <h3>ファイル作成</h3>
+        <p>「Helloというテキストファイルを作って」と入力するだけ</p>
         <div class="flow">
-          <span>議事録20件</span>
+          <span>指示を入力</span>
           <span class="arr">&rarr;</span>
-          <span>きれいなCSV</span>
+          <span>ファイル完成</span>
         </div>
       </div>
       <div class="what-card reveal">
         <span class="emoji">&#127760;</span>
-        <h3>B. Webページ作成</h3>
-        <p>テーマを伝えるだけで、AIがHTMLファイルを自動生成</p>
+        <h3>Webページ作成</h3>
+        <p>「コーヒーショップのLPページを作って」で本格的なHTMLを自動生成</p>
         <div class="flow">
-          <span>「自己紹介」</span>
+          <span>テーマを伝える</span>
           <span class="arr">&rarr;</span>
           <span>完成ページ</span>
         </div>
       </div>
       <div class="what-card reveal">
         <span class="emoji">&#128193;</span>
-        <h3>C. ファイル整理</h3>
-        <p>散らばったファイルをAIが種類ごとに自動で分類</p>
+        <h3>ファイル整理</h3>
+        <p>「data/meetings にあるファイルを整理して」でAIが自動で分類</p>
         <div class="flow">
           <span>バラバラ</span>
           <span class="arr">&rarr;</span>
           <span>整理済み</span>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Video ===== -->
+<section style="background: linear-gradient(180deg, white 0%, var(--bg) 100%); padding: 60px 20px;">
+  <div class="container">
+    <div class="section-header">
+      <h2>動画で見てみよう</h2>
+      <p>実際の操作イメージを動画で確認できます</p>
+    </div>
+    <div class="reveal" style="position: relative; max-width: 720px; margin: 0 auto; aspect-ratio: 16/9; background: #0f172a; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(15,23,42,0.2);">
+      <!-- YouTube iframe placeholder — 動画URLが決まったら src を差し替え -->
+      <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; color: #94a3b8;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span style="font-size: 1rem; font-weight: 700;">動画準備中</span>
+        <span style="font-size: 0.8rem; color: #64748b;">Coming Soon</span>
       </div>
     </div>
   </div>
@@ -995,27 +1013,23 @@ footer a:hover { text-decoration: underline; }
   <span class="t-blue">&#9553;</span>  AIエージェント体験 研修ツール        <span class="t-blue">&#9553;</span>
   <span class="t-blue">&#9562;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9565;</span>
 
-  <span class="t-amber">&#9473;&#9473; 体験メニュー &#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;</span>
+  <span class="t-amber">&#9473;&#9473; こんなことを頼めます &#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;</span>
 
-  <span class="t-amber">&#9733;</span>1. データ抽出 <span class="t-dim">【おすすめ】</span>
-  <span class="t-dim">  20件の会議メモから情報を自動で整理</span>
+  たとえば、こんな指示を入力してみましょう：
 
-   2. Webページ作成
-  <span class="t-dim">  指定テーマでHTMLページを自動生成</span>
+    <span class="t-green">「Helloというテキストファイルを作って」</span>
 
-   3. ファイル整理
-  <span class="t-dim">  散らばったファイルを自動で分類</span>
+    <span class="t-green">「コーヒーショップのLPページを作って」</span>
 
-  番号を入力 [1-4]: <span class="t-green">1</span>
+    <span class="t-green">「data/meetings にあるファイルを整理して」</span>
 
-  <span class="t-green">&#8594; データ抽出シナリオを開始します...</span>
+  <span class="t-dim">※ 日本語でそのまま入力できます</span>
 
-  <span class="t-dim">&#9484;</span> <span class="t-pink">ファイル一覧 (Glob)</span>
-  <span class="t-dim">&#9474;</span> data/meetings/ 内の <span class="t-amber">20</span> ファイルを検出
+  &gt; <span class="t-amber">Helloというテキストファイルを作って</span>
+
+  <span class="t-dim">&#9484;</span> <span class="t-pink">ファイル作成 (Write)</span>
+  <span class="t-dim">&#9474;</span> hello.txt を作成中...
   <span class="t-dim">&#9492;</span> <span class="t-green">完了</span>
-
-  <span class="t-dim">&#9484;</span> <span class="t-pink">ファイル読み取り (Read)</span>
-  <span class="t-dim">&#9474;</span> meeting_20260115_001.txt を読み取り中...
 </pre>
         </div>
       </div>
@@ -1027,25 +1041,33 @@ footer a:hover { text-decoration: underline; }
 <section class="steps-section">
   <div class="container">
     <div class="section-header">
-      <h2>使い方はカンタン3ステップ</h2>
-      <p>Windows なら、ダウンロードしてダブルクリックするだけ</p>
+      <h2>使い方はカンタン4ステップ</h2>
+      <p>Windows なら、exeをダブルクリックしてセットアップ → PowerShell で「appnavi」と打つだけ</p>
     </div>
     <div class="steps-row">
       <div class="step-card reveal">
         <div class="step-num">1</div>
         <h3>ダウンロード</h3>
-        <p>GitHub Releases から<br><strong>AppTalentNavi.exe</strong><br>をダウンロード</p>
+        <p>GitHub Releases から<br><strong>AppTalentNavi.exe</strong> を含む<br>ZIP をダウンロードして解凍</p>
       </div>
       <div class="step-card reveal">
         <div class="step-num">2</div>
-        <h3>ダブルクリック</h3>
-        <p>ダウンロードした exe を<br>ダブルクリックで起動</p>
-        <div class="note">初回は SmartScreen 警告が出る場合があります。<br>「詳細情報」→「実行」でOK</div>
+        <h3>exeをダブルクリック</h3>
+        <p><strong>AppTalentNavi.exe</strong> をダブルクリック。<br>自動でセットアップが完了します</p>
       </div>
       <div class="step-card reveal">
         <div class="step-num">3</div>
-        <h3>番号を選ぶ</h3>
-        <p>体験メニューから<br>やりたいシナリオの<br>番号を入力するだけ！</p>
+        <h3>PowerShell を開く</h3>
+        <p>スタートメニューで<br>「PowerShell」と入力して起動</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">4</div>
+        <h3>appnavi で起動</h3>
+        <p>新しい PowerShell を開き、<br>以下のコマンドを入力：</p>
+        <div style="position:relative; margin-top:12px;">
+          <code style="display:block; background:#0f172a; color:#34d399; padding:12px 16px; border-radius:10px; font-size:0.95rem; font-weight:700; text-align:left;">appnavi</code>
+          <button onclick="navigator.clipboard.writeText('appnavi').then(()=>{this.textContent='Copied!';setTimeout(()=>{this.textContent='Copy'},1500)})" style="position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.15); color:#94a3b8; border:none; border-radius:6px; padding:4px 10px; font-size:0.7rem; cursor:pointer; transition:all 0.2s;">Copy</button>
+        </div>
       </div>
     </div>
     <div style="text-align:center; margin-top:40px;" class="reveal">
@@ -1098,7 +1120,11 @@ footer a:hover { text-decoration: underline; }
       <div class="faq-list">
         <div class="faq-item reveal">
           <div class="q">プログラミングの知識は必要？</div>
-          <div class="a">全く不要です。メニューから番号を選ぶだけで体験できます。高専1年生やプログラミング未経験の方でも問題なく使えます。</div>
+          <div class="a">全く不要です。やりたいことを日本語で入力するだけで体験できます。高専1年生やプログラミング未経験の方でも問題なく使えます。</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="q">exeをダブルクリックしてもセットアップが進まない</div>
+          <div class="a">Windows SmartScreen が表示された場合は「詳細情報」→「実行」を選んでください。セットアップ完了後、PowerShell を開いて <code>appnavi</code> と入力すると起動します。</div>
         </div>
         <div class="faq-item reveal">
           <div class="q">「WindowsによってPCが保護されました」と出た</div>
@@ -1147,7 +1173,7 @@ footer a:hover { text-decoration: underline; }
     <img src="images/ogp.png" alt="ミライちゃんとラピットくん" style="height:auto; max-width:480px; border-radius:20px;">
   </div>
   <h2>さっそく体験してみよう！</h2>
-  <p>ダウンロードして、ダブルクリック。<br>AIエージェントが動き出す瞬間を目撃しよう。</p>
+  <p>ダウンロードして、exeをダブルクリック。<br>PowerShell で <strong>appnavi</strong> と打つだけで、AIエージェントが動き出します。</p>
   <div class="cta-buttons">
     <a href="https://github.com/tsubasagit/AppTalentNavi/releases/latest" class="btn btn-primary">
       Windows版をダウンロード
